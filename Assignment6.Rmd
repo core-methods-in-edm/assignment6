@@ -1,0 +1,69 @@
+---
+title: "Assignment 6"
+author: "Charles Lang"
+date: "11/16/2016"
+output: html_document
+---
+#Addignment 6
+
+In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
+
+certified (yes/no) - Whether or not a student paid for the course  
+forum.posts (numeric) - How many forum posts a student made throughout the course  
+grade (numeric) - A student's average grade for the course exam  
+assignment (numeric) - A student's average grade for the course assignments  
+
+#Packages
+```{r}
+library(rpart)
+```
+
+#Data
+```{r}
+#Upload the data sets MOOC1.csv and MOOC2.csv
+M1 <- 
+
+M2 <- 
+
+```
+
+#Decision tree
+```{r}
+#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
+
+c.tree1 <- 
+
+#Check the results from the classifcation tree using the printcp() command
+
+
+
+#Plot your tree
+
+
+
+```
+
+#The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Cost Complexity" and represents the cost in error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
+
+#If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
+
+```{r}
+c.tree2 <- prune(c.tree1, cp = 0.047739)
+
+#Visualize this tree and compare it to the one you generated earlier
+
+post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+```
+
+#Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
+
+```{r}
+M2$predict1 <- predict(c.tree1, M2, type = "class")
+
+M2$predict2 <- predict(c.tree2, M2, type = "class")
+
+table(M2$certified, M2$predict1)
+
+table(M2$certified, M2$predict2)
+
+```
