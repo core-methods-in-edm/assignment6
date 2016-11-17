@@ -21,9 +21,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.table("MOOC1.csv", sep = ",", header = TRUE)
 
-M2 <- 
+M2 <- read.table("MOOC2.csv", sep = ",", header = TRUE)
 
 ```
 
@@ -31,39 +31,107 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+#we build this model with the factors: forum.posts, grade and assignment
 
+c.tree1 <- rpart(certified ~ forum.posts + grade + assignment, method="class", data=M1, control=rpart.control(minsplit = 1, minbucket = 1, cp = 0.0001))
+#cp = complexity cost
+#class is for classification
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
 
 #Plot your tree
 
-
+post(c.tree1, file = "tree1.ps", title = "")
 
 ```
+CP nsplit rel error xerror     xstd
+1  0.00445633      0   1.00000 1.0000 0.062466
+2  0.00392157     20   0.90196 1.1471 0.065628
+3  0.00367647     36   0.83333 1.1618 0.065918
+4  0.00326797     40   0.81863 1.2696 0.067909
+5  0.00294118     53   0.77451 1.3775 0.069677
+6  0.00280112     65   0.73529 1.3775 0.069677
+7  0.00245098    100   0.61765 1.5245 0.071756
+8  0.00163399    198   0.37255 1.5882 0.072546
+9  0.00122549    250   0.27451 1.6324 0.073056
+10 0.00098039    262   0.25980 1.6765 0.073535
+11 0.00010000    272   0.25000 1.6863 0.073638
 
 #The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Cost Complexity" and represents the cost in error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
 
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp = 0.00445)
 
 #Visualize this tree and compare it to the one you generated earlier
+post(c.tree2, file = "tree2.ps", title = "MOOC cp=0.00445") #This creates a pdf image of the tree
 
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
-
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
 table(M2$certified, M2$predict1)
-
 table(M2$certified, M2$predict2)
 
+mismatch1 <- dplyr::filter(M2, certified != predict1)
+mismatch2 <- dplyr::filter(M2, certified != predict2)
 ```
+From the tree1 prediction model with 272 split of the tree, there are (1642+1702)/10000 = 3344/10000 = 33.44% error rate.
+
+From the tree2 prediction model with 1 split of the tree, there are (2016+239)/10000 = 2255/10000 = 22.55% error rate.
+
+Therefore, tree2 is better than tree1 in students' certifcation status prediction because it is lower in error rate in prediction (the least observation number is in match2 dataframe, so far).
+
+getting inspired by the demo, maybe "less is more". To explore and get a better tree for prediction, we can build the prediction models with different factor combinations: A(forum.posts and grade) B(grade and assignment)  C(forum.posts and assignment)
+
+```{r}
+#A. (forum.posts and grade) 
+c.treeA <- rpart(certified ~ forum.posts + grade, method="class", data=M1, control=rpart.control(minsplit = 1, minbucket = 1, cp = 0.0001))
+printcp(c.treeA)
+post(c.treeA, file = "treeA.ps", title = "cp=0.0001")
+c.treeA2 <- prune(c.treeA, cp = 0.004)
+post(c.treeA2, file = "treeA2.ps", title = "MOOC cp = 0.004")
+M2$predictA <- predict(c.treeA, M2, type = "class")
+M2$predictA2 <- predict(c.treeA2, M2, type = "class")
+mismatchA <- dplyr::filter(M2, certified != predictA)
+mismatchA2 <- dplyr::filter(M2, certified != predictA2)
+
+#B. (grade and assignment) 
+c.treeB <- rpart(certified ~ grade + assignment, method="class", data=M1, control=rpart.control(minsplit = 1, minbucket = 1, cp = 0.0001))
+printcp(c.treeB)
+post(c.treeB, file = "treeB.ps", title = "cp=0.0001")
+#CP nsplit rel error xerror     xstd
+#1 0.0024510      0   1.00000 1.0000 0.062466
+#2 0.0016340      8   0.98039 1.0441 0.063467
+#3 0.0012255     22   0.95588 1.0833 0.064318
+#4 0.0001000     26   0.95098 1.0686 0.064003
+c.treeB2 <- prune(c.treeB, cp = 0.0024)
+post(c.treeB2, file = "treeB2.ps", title = "MOOC cp = 0.0024")
+M2$predictB <- predict(c.treeB, M2, type = "class")
+M2$predictB2 <- predict(c.treeB2, M2, type = "class")
+mismatchB <- dplyr::filter(M2, certified != predictB)
+mismatchB2 <- dplyr::filter(M2, certified != predictB2)
+
+#C. (forum.posts and assignment)
+c.treeC <- rpart(certified ~ forum.posts + assignment, method="class", data=M1, control=rpart.control(minsplit = 1, minbucket = 1, cp = 0.0001))
+printcp(c.treeC)
+post(c.treeC, file = "treeC.ps", title = "cp=0.0001")
+c.treeC2 <- prune(c.treeC, cp = 0.0040)
+post(c.treeC2, file = "treeC2.ps", title = "MOOC cp = 0.0040")
+M2$predictC <- predict(c.treeC, M2, type = "class")
+M2$predictC2 <- predict(c.treeC2, M2, type = "class")
+mismatchC <- dplyr::filter(M2, certified != predictC)
+mismatchC2 <- dplyr::filter(M2, certified != predictC2)
+```
+
+treeB2 is the best tree(so far) in students' certifcation status prediction because it has lowest error rate 2090/10000 = 20.9% in prediction, having the lowest number of observations in the mismatch dataframes.
+treeB2 predicts students' certification status based on grade and assignment, with 2 nodes in the classification tree. 
+
+image: ![](mismatch.png)
+
