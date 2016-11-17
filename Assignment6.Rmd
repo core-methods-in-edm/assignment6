@@ -8,10 +8,10 @@ output: html_document
 
 In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
 
-certified (yes/no) - Whether or not a student paid for the course
-forum.posts (numeric) - How many forum posts a student made throughout the course
-grade (numeric) - A student's average grade for the course exam
-assignment (numeric) - A student's average grade for the course assignments
+certified (yes/no) - Whether or not a student paid for the course  
+forum.posts (numeric) - How many forum posts a student made throughout the course  
+grade (numeric) - A student's average grade for the course exam  
+assignment (numeric) - A student's average grade for the course assignments  
 
 #Packages
 ```{r}
