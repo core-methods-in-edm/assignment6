@@ -166,15 +166,15 @@ printcp(c.tree1)</code></pre>
 ## 
 ##           CP nsplit rel error xerror     xstd
 ## 1  0.0044563      0   1.00000 1.0000 0.062466
-## 2  0.0039216     20   0.90196 1.1716 0.066109
-## 3  0.0036765     36   0.83333 1.2206 0.067033
-## 4  0.0032680     40   0.81863 1.2892 0.068247
-## 5  0.0029412     53   0.77451 1.3775 0.069677
-## 6  0.0028011     65   0.73529 1.3873 0.069827
-## 7  0.0024510    100   0.61765 1.4706 0.071036
-## 8  0.0016340    198   0.37255 1.4902 0.071304
-## 9  0.0012255    250   0.27451 1.5784 0.072429
-## 10 0.0010000    262   0.25980 1.5980 0.072662</code></pre>
+## 2  0.0039216     20   0.90196 1.0931 0.064526
+## 3  0.0036765     36   0.83333 1.1667 0.066014
+## 4  0.0032680     40   0.81863 1.2500 0.067564
+## 5  0.0029412     53   0.77451 1.3333 0.068979
+## 6  0.0028011     65   0.73529 1.3529 0.069294
+## 7  0.0024510    100   0.61765 1.4461 0.070693
+## 8  0.0016340    198   0.37255 1.5098 0.071565
+## 9  0.0012255    250   0.27451 1.5980 0.072662
+## 10 0.0010000    262   0.25980 1.6029 0.072720</code></pre>
 <pre class="r"><code>#Plot your tree
 
 post(c.tree1, file = &quot;tree1.ps&quot;, title = &quot;Tree model to predict if MOOC (1) student is certified&quot;)</code></pre>
@@ -206,6 +206,15 @@ table(M2$certified, M2$predict1)</code></pre>
 ##         no  yes
 ##   no   109 1971
 ##   yes  454 7466</code></pre>
+<pre class="r"><code>library(plyr)</code></pre>
+<pre><code>## Warning: package 'plyr' was built under R version 3.2.5</code></pre>
+<pre class="r"><code>T1 &lt;- as.data.frame(table(M2$certified, M2$predict1))
+T1$iserror = ifelse(T1$Var1 == T1$Var2, 0,1)
+T1 &lt;- ddply(T1, .(iserror), summarise, count=sum(Freq))
+
+T2 &lt;- as.data.frame(table(M2$certified, M2$predict2))
+T2$iserror = ifelse(T2$Var1 == T2$Var2, 0,1)
+T2 &lt;- ddply(T2, .(iserror), summarise, count=sum(Freq))</code></pre>
 <ul>
 <li>Tree 1 has 6672 correct predictions, and 3328 incorrect predictions
 <ul>

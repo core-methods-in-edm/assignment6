@@ -68,10 +68,22 @@ table(M2$certified, M2$predict2)
 
 ```
 
-* Tree 1 has `r 432 + 6240` correct predictions, and `r 1680 + 1648` incorrect predictions
-    + **Error Rate: `r 100*(1680 + 1648)/(432 + 6240 + 1680 + 1648)`%**
+```{r}
+library(plyr)
 
-* Tree 2 has `r 109 + 7466` correct predictions, and `r 454 + 1971` incorrect predictions
-    + **Error Rate: `r 100*(454 + 1971)/(109 + 7466 + 454 + 1971)`%**
+T1 <- as.data.frame(table(M2$certified, M2$predict1))
+T1$iserror = ifelse(T1$Var1 == T1$Var2, 0,1)
+T1 <- ddply(T1, .(iserror), summarise, count=sum(Freq))
+
+T2 <- as.data.frame(table(M2$certified, M2$predict2))
+T2$iserror = ifelse(T2$Var1 == T2$Var2, 0,1)
+T2 <- ddply(T2, .(iserror), summarise, count=sum(Freq))
+``` 
+
+* Tree 1 has `r T1[1,2]` correct predictions, and `r T1[2,2]` incorrect predictions
+    + **Error Rate: `r 100*T1[2,2]/(sum(T1$count))`%**
+
+* Tree 2 has `r T2[1,2]` correct predictions, and `r T2[2,2]` incorrect predictions
+    + **Error Rate: `r 100*T2[2,2]/(sum(T2$count))`%**
  
  Thus, the second tree is better, because it is less overfit.
