@@ -21,9 +21,8 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
-
-M2 <- 
+M1 <-  read.table("MOOC1.csv",  sep=",", header=TRUE)
+M2 <- read.table("MOOC2.csv", sep=",", header=TRUE)
 
 ```
 
@@ -31,14 +30,14 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+c.tree1 <- rpart(assignment ~ forum.posts + grade, method="class", data=M1, control=rpart.control(minsplit=1,minbucket=1, cp=0.001))
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
-
+post(c.tree1)
 
 
 ```
