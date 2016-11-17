@@ -21,9 +21,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.csv("MOOC1.csv", header = TRUE, sep = ",")
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE, sep = ",")
 
 ```
 
@@ -31,15 +31,15 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ forum.posts + grade + assignment, method="class", data=M1, control = rpart.control(minsplit=1, minbucket=1, cp=0.001))
 
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
 
 #Plot your tree
 
-
+post(c.tree1, file = "tree.ps", title = "predicting certified")
 
 ```
 
@@ -48,7 +48,7 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp = 0.0039216)
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -65,5 +65,28 @@ M2$predict2 <- predict(c.tree2, M2, type = "class")
 table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
-
 ```
+```{r}
+M2.1 <- dplyr::count(M2, predict1, certified)
+M2.1$percent <- M2.1$n / sum(M2.1$n)
+M2.1$correct <- ifelse(M2.1$predict1==M2.1$certified, 1, 0)
+M2.1a <- M2.1 %>% group_by(correct) %>% summarise(percent1=sum(percent)) #calculate correct and error rate of c.tree1
+```
+# A tibble: 2 × 2
+  correct percent1
+    <dbl>    <dbl>
+1       0   0.3328
+2       1   0.6672
+```{r}
+M2.2 <- dplyr::count(M2, predict2, certified)
+M2.2$percent <- M2.2$n / sum(M2.2$n)
+M2.2$correct <- ifelse(M2.2$predict2==M2.2$certified, 1, 0)
+M2.2a <- M2.2 %>% group_by(correct) %>% summarise(percent2=sum(percent)) #calculate correct and error rate of c.tree2
+```
+# A tibble: 2 × 2
+  correct percent2
+    <dbl>    <dbl>
+1       0   0.2255
+2       1   0.7745
+
+The error rate of "c.tree1" is 0.3328 which is higher than the error rate of "c.tree2", 0.2255. Therefore, the c.tree2 with fewer nodes, though not that specific for the traning set, is much better for prediction, i.e. more generalizable.
