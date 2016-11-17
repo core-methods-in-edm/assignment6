@@ -84,7 +84,7 @@ table(M2$certified, M2$predict2)
 #  no   145 1935
 #  yes  539 7381
 
-# wrong preditions over total number for each prediction model
+# wrong predictions over total number for each prediction model
 (1935+539)/(145+1935+539+7381)
 # predict2 0.2474
 
