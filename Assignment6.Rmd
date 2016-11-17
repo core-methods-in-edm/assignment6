@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
+author: "Chuheng Hu"
 date: "11/16/2016"
 output: html_document
 ---
