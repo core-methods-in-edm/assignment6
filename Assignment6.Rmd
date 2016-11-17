@@ -21,25 +21,23 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.csv("MOOC1.csv")
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv")
 
 ```
 
 #Decision tree
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
-
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ forum.posts+grade+assignment, method="class", data=M1, control = rpart.control(minsplit=1, minbucket = 1, cp=0.001))
 
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
 
 #Plot your tree
-
-
+plot(c.tree1)
 
 ```
 
@@ -48,22 +46,36 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
 
-#Visualize this tree and compare it to the one you generated earlier
-
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
-M2$predict1 <- predict(c.tree1, M2, type = "class")
+compare_cp = data.frame()
+for(i in 1:10)
+{
+  pickcp = format(round(c.tree1$cptable[i], 6), nsmall = 2)
 
-M2$predict2 <- predict(c.tree2, M2, type = "class")
+  c.tree2 <- prune(c.tree1, cp = 0.00445)
 
-table(M2$certified, M2$predict1)
+  #Visualize this tree and compare it to the one you generated earlier
 
-table(M2$certified, M2$predict2)
+  post(c.tree2, file = paste("tree2_",i,".ps",sep=""), title = "MOOC") #This creates a pdf image of the tree
 
+  M2$predict1 <- predict(c.tree1, M2, type = "class")
+
+  M2$predict2 <- predict(c.tree2, M2, type = "class")
+
+  predict1 = table(M2$certified, M2$predict1)
+
+  predict2 = table(M2$certified, M2$predict2)
+
+  error_pre1 = (predict1[2]+predict1[3])/(sum(predict1))
+  error_pre2 = (predict2[2]+predict2[3])/(sum(predict1))
+  compare_cp = rbind(compare_cp, c(c.tree1$cptable[i], error_pre1, error_pre2))
+}
+colnames(compare_cp) = c("cp", "err-pre1", "err-pre2")
+compare_cp_t = t(compare_cp)
+compare_cp_t[,which.min(compare_cp_t['err-pre2',])]
 ```
