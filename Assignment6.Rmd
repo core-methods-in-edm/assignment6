@@ -21,9 +21,8 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
-
-M2 <- 
+M1<- read.csv("~/Desktop/HUDK 4050/Assignment#6-Jing/MOOC1.csv")
+M2 <- read.csv("~/Desktop/HUDK 4050/Assignment#6-Jing/MOOC2.csv")
 
 ```
 
@@ -31,15 +30,32 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+#grow the tree
+c.tree1 <- rpart(certified ~ forum.posts + assignment + grade, method="class", data=M1, control=rpart.control(minsplit=1, minbucket=1, cp=0.0001)) 
+
+#Look at the error of this tree; examine the results
+printcp(c.tree1)
+
+```
+
+           CP nsplit rel error xerror     xstd
+1  0.00445633      0   1.00000 1.0000 0.062466
+2  0.00392157     20   0.90196 1.1520 0.065726
+3  0.00367647     36   0.83333 1.2059 0.066761
+4  0.00326797     40   0.81863 1.2304 0.067212
+5  0.00294118     53   0.77451 1.2745 0.067994
+6  0.00280112     87   0.65686 1.3039 0.068495
+7  0.00245098    101   0.61275 1.4118 0.070195
+8  0.00163399    197   0.37255 1.4804 0.071171
+9  0.00122549    250   0.27451 1.5098 0.071565
+10 0.00098039    262   0.25980 1.5294 0.071819
+11 0.00010000    272   0.25000 1.5392 0.071944
+
+```{r}
 
 #Check the results from the classifcation tree using the printcp() command
-
-
-
 #Plot your tree
-
-
+post(c.tree1, file = "tree.ps", title = "MOOC1")
 
 ```
 
@@ -48,22 +64,31 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp =0.0039216)
 
 #Visualize this tree and compare it to the one you generated earlier
 
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree2, file = "tree2.ps", title = "MOOC2") 
+#This creates a pdf image of the tree
+
 ```
-
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
-
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+table(M2$certified, MOOC2$predict1)
 
 table(M2$certified, M2$predict2)
+
+#prediction 1 error rate
+(434+6231)/(434+6231+1646+1689)
+[1] 0.6665
+
+#prediction 2 error rate
+(64+7681)/(64+7681+239+2016)
+[1] 0.7745
+
 
 ```
