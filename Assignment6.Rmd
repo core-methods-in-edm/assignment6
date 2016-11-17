@@ -21,9 +21,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.csv("~/Desktop/FALL_2016/Assignment 6/MOOC1.csv")
 
-M2 <- 
+M2 <- read.csv("~/Desktop/FALL_2016/Assignment 6/MOOC2.csv")
 
 ```
 
@@ -31,15 +31,26 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ forum.posts + grade + assignment,method="class", data = M1, control=rpart.control(minsplit=1,minbucket=1,cp=0.001))
 
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
+          CP nsplit rel error xerror     xstd
+1  0.0044563      0   1.00000 1.0000 0.062466
+2  0.0039216     20   0.90196 1.1422 0.065531
+3  0.0036765     36   0.83333 1.1961 0.066577
+4  0.0032680     40   0.81863 1.2794 0.068079
+5  0.0029412     53   0.77451 1.3578 0.069371
+6  0.0028011     65   0.73529 1.3578 0.069371
+7  0.0024510    100   0.61765 1.4216 0.070339
+8  0.0016340    198   0.37255 1.4608 0.070900
+9  0.0012255    250   0.27451 1.5686 0.072310
+10 0.0010000    262   0.25980 1.5735 0.072370
 
 #Plot your tree
 
-
+post(c.tree1, file = "tree.ps", title = "certified yes/no")
 
 ```
 
@@ -48,10 +59,29 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp =  0.0016340)
 
+in here you should use your own cp
+          CP nsplit rel error xerror     xstd
+1  0.0044563      0   1.00000 1.0000 0.062466
+2  0.0039216     20   0.90196 1.1422 0.065531
+3  0.0036765     36   0.83333 1.1961 0.066577
+4  0.0032680     40   0.81863 1.2794 0.068079
+5  0.0029412     53   0.77451 1.3578 0.069371
+6  0.0028011     65   0.73529 1.3578 0.069371
+7  0.0024510    100   0.61765 1.4216 0.070339
+8  0.0016340    198   0.37255 1.4608 0.070900
+9  0.0012255    250   0.27451 1.5686 0.072310
+10 0.0010000    262   0.25980 1.5735 0.072370
+#cp3
+c.tree3 <- prune(c.tree1, cp = 0.0036765)
+printcp(c.tree3)
+post(c.tree3, file = "tree3.ps", title = "MOOC")
+#cp2
+c.tree4 <- prune(c.tree1, cp = 0.0039216)
+printcp(c.tree4)
+post(c.tree4, file = "tree4.ps", title = "MOOC")
 #Visualize this tree and compare it to the one you generated earlier
-
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
 ```
 
@@ -59,11 +89,22 @@ post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of th
 
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
-
-M2$predict2 <- predict(c.tree2, M2, type = "class")
+M2$predict2 <- predict(c.tree4, M2, type = "class")
 
 table(M2$certified, M2$predict1)
-
 table(M2$certified, M2$predict2)
 
+        no  yes
+  no   432 1648
+  yes 1680 6240
+  (1680+1648)/(432+1648+1680+6240)
+  0.3328
+add up all four and divde with yesno and noyes add up (error)
+     
+        no  yes
+  no    64 2016
+  yes  239 7681
+  (2016+239)/(64+2016+239+7681)
+  0.2255
+First one was original cp and second one has the lower error rate which used cp2. Here adding less node means lesser error rate and maybe adding the more nodes means more over fitting.
 ```
