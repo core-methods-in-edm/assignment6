@@ -21,9 +21,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.table("MOOC1.csv", sep = ",", header = TRUE)
 
-M2 <- 
+M2 <- read.table("MOOC2.csv", sep = ",", header = TRUE)
 
 ```
 
@@ -31,14 +31,14 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ forum.posts + grade + assignment, method="class", control = rpart.control(minsplit = 1, minbucket = 1, cp = 0.001), data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
-
+plot(c.tree1)
 
 
 ```
@@ -48,7 +48,8 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp = 0.0036765)
+plot(c.tree2)
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -62,8 +63,17 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+tab1 = table(M2$certified, M2$predict1)
 
-table(M2$certified, M2$predict2)
+tab2 = table(M2$certified, M2$predict2)
+```
+(no, yes) and (yes, no) are wrong predictions, we need to find the one with highest (no, yes) + (yes, no) proportion, which is bad
+```{r}
+p1 = (tab1[1,2] + tab1[2,1])/sum(tab1[1:2, 1:2])
+p1
+p2 = (tab2[1,2] + tab2[2,1])/sum(tab2[1:2, 1:2])
+p2
 
 ```
+Since p2 is lower, we can see that tree 2 has lower error rate, so tree 2 is probabily better. 
+
