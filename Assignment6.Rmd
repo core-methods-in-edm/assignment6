@@ -21,9 +21,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.table("MOOC1.csv", sep = ",", header = TRUE)
 
-M2 <- 
+M2 <- read.table("MOOC2.csv", sep = ",", header = TRUE)
 
 ```
 
@@ -31,15 +31,27 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ grade + forum.posts, method="class", data=M1, control=rpart.control(minsplit = 1, minbucket = 1, cp=0.001))
 
 #Check the results from the classifcation tree using the printcp() command
 
+printcp(c.tree1)
 
+#         CP nsplit rel error xerror     xstd
+#1 0.0040850      0   1.00000 1.0000 0.062466
+#2 0.0036765      7   0.97059 1.0588 0.063790
+#3 0.0029412     11   0.95588 1.1029 0.064731
+#4 0.0024510     36   0.88235 1.2059 0.066761
+#5 0.0019608     44   0.86275 1.2108 0.066852
+#6 0.0014006     49   0.85294 1.2255 0.067123
+#7 0.0012255     56   0.84314 1.2451 0.067477
+#8 0.0010000     72   0.82353 1.2549 0.067651
 
 #Plot your tree
 
+post(c.tree1, file = "treemooc1.ps", title = "Certified: 1 - Yes, 2 - No, 3 - ?")
 
+#terrible looking tree. but I think that was what was expected. 
 
 ```
 
@@ -48,7 +60,8 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+#prune back to 4th
+c.tree2 <- prune(c.tree1, cp = 0.0024510)
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -63,7 +76,21 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
 table(M2$certified, M2$predict1)
-
+#       no  yes
+#  no   196 1884
+#  yes  798 7122
 table(M2$certified, M2$predict2)
+#       no  yes
+#  no   145 1935
+#  yes  539 7381
 
+# wrong preditions over total number for each prediction model
+(1935+539)/(145+1935+539+7381)
+# predict2 0.2474
+
+(1884+798)/(196+1884+798+7122)
+# predict1 0.2682
+
+#Prediction2 has lower error percentage, so better in this case with this data. 
+#Deep breath. 
 ```
