@@ -21,7 +21,7 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- 
+M1 <- read.csv("MOOC1.csv", header = TRUE)
 
 M2 <- 
 
@@ -29,7 +29,7 @@ M2 <-
 
 #Decision tree
 ```{r}
-#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
+#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
 c.tree1 <- 
 
@@ -39,7 +39,7 @@ c.tree1 <-
 
 #Plot your tree
 
-
+post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
 
 ```
 
@@ -48,7 +48,7 @@ c.tree1 <-
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.047739)
+c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
