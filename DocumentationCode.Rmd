@@ -1,6 +1,6 @@
 ---
-title: "Assignment 6"
-author: "Shreya"
+title: "Decision Trees & Cross Validation"
+author: "Shreya Goel"
 date: "11/16/2016"
 output: html_document
 ---
