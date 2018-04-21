@@ -4,9 +4,8 @@ author: "Shreya Goel"
 date: "11/16/2016"
 output: html_document
 ---
-#Assignment 6
-
-In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
+# Data from a MOOC. 
+It contains the following per-student variables:
 
 certified (yes/no) - Whether or not a student paid for the course  
 forum.posts (numeric) - How many forum posts a student made throughout the course  
@@ -15,7 +14,7 @@ assignment (numeric) - A student's average grade for the course assignments
 
 setwd()
 
-#Packages
+### Packages
 ```{r}
 install.packages("party")
 install.packages("rpart")
@@ -23,7 +22,7 @@ library(rpart)
 library(party)
 ```
 
-#Data
+### Upload Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.table("MOOC1.csv", sep = ",", header = TRUE)
@@ -31,7 +30,7 @@ M1 <- read.table("MOOC1.csv", sep = ",", header = TRUE)
 M2 <- read.table("MOOC2.csv", sep = ",", header = TRUE)
 ```
 
-#Decision tree
+### Decision tree
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame.
 
@@ -61,7 +60,7 @@ post(c.tree2, file = "tree2.ps", title = "MOOC")
 #This creates a pdf image of the tree
 ```
 
-#Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
+### Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
