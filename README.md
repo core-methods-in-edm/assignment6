@@ -1,2 +1,1 @@
-# assignment6
-Decision Trees &amp; Cross Validation
+# Decision Trees and Cross Validation
