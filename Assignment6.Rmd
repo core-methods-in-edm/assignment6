@@ -1,7 +1,7 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
-date: "11/16/2016"
+author: "Yipu Zheng"
+date: "11/20/2018"
 output: html_document
 ---
 #Addignment 6
@@ -58,6 +58,8 @@ post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of th
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
+# The two trees have the same error rate. 
+
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
@@ -66,5 +68,12 @@ M2$predict2 <- predict(c.tree2, M2, type = "class")
 table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
+
+
+#Experiment with other parameters: 
+c.tree3 <- prune(c.tree1, cp = 0.98545)
+post(c.tree3, file = "tree3.ps", title = "MOOC")
+M2$predict3 <- predict(c.tree3, M2, type = "class")
+table(M2$certified, M2$predict3)
 
 ```
