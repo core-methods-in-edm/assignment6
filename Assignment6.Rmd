@@ -54,7 +54,7 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.1)#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.058182)#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -74,4 +74,7 @@ table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
 
+#Calculate the error rate for tree1: (24+7790)/10000 = 0.7814
+#for tree 2: (1184+3453)/10000 = 0.4637
+#Therefore, tree2 has lower error rate and better prediction for "wild sample"
 ```
