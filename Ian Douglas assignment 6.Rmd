@@ -1,0 +1,48 @@
+---
+title: "Ian Douglas assignment 6"
+author: "ian douglas"
+date: "11/26/2018"
+output: html_document
+---
+```{R}
+M1 <- read.csv("MOOC1.csv", header = TRUE)
+
+M2 <- read.csv("MOOC2.csv", header = TRUE)
+```
+
+```{R}
+c.tree1 <- rpart(certified ~ forum.posts, data = M1)
+c.tree2 <- rpart(certified ~ grade, data = M1)
+c.tree3 <- rpart(certified ~ assignment, data = M1)
+c.tree4 <- rpart(certified ~ assignment + grade, data = M1)
+c.tree5 <- rpart(certified ~ assignment + forum.posts + grade, data = M1)
+printcp(c.tree1)
+printcp(c.tree2)
+printcp(c.tree3)
+printcp(c.tree4)
+printcp(c.tree5)
+```
+I conclude to keep only forum.posts in the tree because it is highly efficient, showing the lowest CP and relative error with only two branches.
+```{R}
+post(c.tree1, file = "mytree1.ps", title = "MOOC1")
+```
+
+##Pruning activity
+```{R}
+# I am using a different tree, because the last tree already had 2 nodes
+c.tree4.prune <- prune(c.tree4, cp = 0.058182)
+post(c.tree4.prune, file = "mytree2.ps", title = "MOOC1")
+```
+##Prediction
+```{R}
+M2$predict1 <- predict(c.tree4, M2, type = "class")
+
+M2$predict2 <- predict(c.tree4.prune, M2, type = "class")
+
+table(M2$certified, M2$predict1)
+
+table(M2$certified, M2$predict2)
+M2$predict3 <- predict(c.tree1, M2, type = "class")
+table(M2$certified, M2$predict3)
+```
+This shows that the pruned model did a much better job predicting the actual outcomes, however both models underestimated the amount certified and overestimated the amount not certified. Finally, compared with the model containing only "forum.posts", the pruned model containing the other two variables performed better (however, the "forum.posts" model performed far better than the unpruned model with the other two variables).
