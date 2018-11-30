@@ -16,6 +16,10 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+install.packages("rpart.plot")
+library(rpart.plot)
+s <- sample(10,4)
+s
 ```
 
 #Data
@@ -36,22 +40,50 @@ M1$scale_grade <- scale(M1$grade)
 M1$scale_forum <- scale(M1$forum.posts)
 M1$scale_asg <- scale(M1$assignment)
 
-c.tree1<- rpart(certified ~ grade + forum.posts + assignment, method="class", data = M1)
-c.tree1_1 <- rpart(certified ~ scale_grade + scale_forum + scale_asg, method="class", data = M1)
-c.tree1_2 <- rpart(certified ~ grade + assignment, data = M1)
+c.tree123<- rpart(certified ~ grade + forum.posts + assignment, method="class", data = M1)
+c.tree_s_123 <- rpart(certified ~ scale_grade + scale_forum + scale_asg, method="class", data = M1)
+c.tree1 <- rpart(certified ~ grade, method="class", data = M1)
+c.tree2 <- rpart(certified ~ forum.posts, method="class", data = M1)
+c.tree3 <- rpart(certified ~ assignment, method="class", data = M1)
+c.tree12 <- rpart(certified ~ grade + assignment,method="class", data = M1)
 
 # Check the results from the classifcation tree using the printcp() command
+printcp(c.tree123)
+printcp(c.tree_s_123)
 printcp(c.tree1)
-printcp(c.tree1_1)
-printcp(c.tree1_2)
+printcp(c.tree2)
+printcp(c.tree3)
+printcp(c.tree12)
+
+# rpart.plot
+?rpart.plot
+rpart.plot(c.tree123)
+rpart.plot(c.tree_s_123)
+rpart.plot(c.tree1)
+rpart.plot(c.tree2)
+rpart.plot(c.tree3)
+rpart.plot(c.tree12)
+
+# variable importance(Gini)
+?varI
+varImp(c.tree123)
+varImp(c.tree_s_123)
+varImp(c.tree12)
+
+# Qustion：
+# Accoring to varImp(c.tree12), 
 
 
 #Plot your tree
+post(c.tree123, file = "tree123.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree_s_123, file = "tree_s_123.ps", title = "MOOC") #This creates a pdf image of the tree
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
-post(c.tree1_1, file = "tree1_1.ps", title = "MOOC") #This creates a pdf image of the tree
-post(c.tree1_2, file = "tree1_2.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree2, file = "tree2.ps", title = "MOOC")
+post(c.tree3, file = "tree3.ps", title = "MOOC")
+post(c.tree12, file = "tree12.ps", title = "MOOC")
 
-# There's no difference between 1 and 1_1
+
+# There's no difference between 1 and 1_1, and I wonder if it is necessary to scale them
 # The influence of forum.posts is too great, so I decided to delete it from the 3 variables
 ```
 
@@ -82,6 +114,38 @@ tab2
 precision1 <- (tab1[1,1] + tab1[2,2]) / nrow(M2)
 precision2 <- (tab2[1,1] + tab2[2,2]) / nrow(M2)
 
+precision1
+precision2
+
 #precision2 has a lower error rate
 
 ```
+
+decision tree classification - iris 
+```{r}
+install.packages("caret")
+install.packages("randomForest")
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(randomForest)
+
+head(iris)
+dim(iris)
+s <- sample(150,100)
+
+iris_train <- iris[s, ]
+iris_test <- iris[-s, ]
+
+i_tree <- rpart(Species~., iris_train, method = "class")
+rpart.plot(i_tree)
+
+varImp(i_tree)
+varImpPlot(i_tree,type=2)
+
+p <- predict(i_tree, iris_test, type = "class")
+
+table(iris_test[ ,5], p)
+
+```
+
