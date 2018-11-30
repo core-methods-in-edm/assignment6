@@ -57,22 +57,21 @@ printcp(c.tree12)
 
 # rpart.plot
 ?rpart.plot
-rpart.plot(c.tree123)
-rpart.plot(c.tree_s_123)
+rpart.plot(c.tree123) # Why there are only two branches in this tree?
+rpart.plot(c.tree_s_123) # "scale" doesn't change the tree. Why?
 rpart.plot(c.tree1)
 rpart.plot(c.tree2)
 rpart.plot(c.tree3)
 rpart.plot(c.tree12)
 
-# variable importance(Gini)
-?varI
+# variable importance(Gini?)
+?varImp
 varImp(c.tree123)
 varImp(c.tree_s_123)
 varImp(c.tree12)
 
 # Qustion：
-# Accoring to varImp(c.tree12), 
-
+# Can varImp be applied to the desicion trees created above? 
 
 #Plot your tree
 post(c.tree123, file = "tree123.ps", title = "MOOC") #This creates a pdf image of the tree
