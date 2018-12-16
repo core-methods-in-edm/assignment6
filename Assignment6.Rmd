@@ -71,5 +71,6 @@ table2<-table(M2$certified, M2$predict2)
 table2
 accuracy2 <- (table2[1,1] + table2[2,2]) / 10000
 accuracy2
+
 #predict2(pruned tree) has a lower error rate.
 ```
