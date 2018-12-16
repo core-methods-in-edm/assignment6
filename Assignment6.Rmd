@@ -73,4 +73,4 @@ accuracy2 <- (table2[1,1] + table2[2,2]) / 10000
 accuracy1
 accuracy2
 ```
-The pruned tree has a lower error rate (53.63% accuracy) than the original tress (21.86% accuracy)
+The pruned tree has a lower error rate (53.63% accuracy) than the original tree (21.86% accuracy)
