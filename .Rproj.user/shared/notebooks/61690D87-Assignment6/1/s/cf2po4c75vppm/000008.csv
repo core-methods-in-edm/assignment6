@@ -1,0 +1,5 @@
+"0","#Create a data frame that only contains the Fall 2012 data
+D3 <- filter(D2, semester == ""2012_Fall"")
+"
+"2","Error in as.ts(x) : object 'D2' not found
+"
