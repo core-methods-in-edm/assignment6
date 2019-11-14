@@ -13,6 +13,8 @@ forum.posts (numeric) - How many forum posts a student made throughout the cours
 grade (numeric) - A student's average grade for the course exam  
 assignment (numeric) - A student's average grade for the course assignments  
 
+##Part I
+
 #Packages
 ```{r}
 library(rpart)
@@ -43,7 +45,9 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 
 ```
 
-#The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Cost Complexity" and represents the cost in error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
+##Part II
+
+#The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Complexity Parameter" and represents the cost to error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
 
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
@@ -67,3 +71,16 @@ table(M2$certified, M2$predict1)
 table(M2$certified, M2$predict2)
 
 ```
+
+##Part III
+
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+
+```{r}
+
+```
+
+
+### To Submit Your Assignment
+
+Please submit your assignment by first "knitting" your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.
