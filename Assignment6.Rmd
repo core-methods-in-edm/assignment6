@@ -1,10 +1,13 @@
 ---
-title: "Assignment 6"
-author: "Charles Lang"
-date: "11/16/2016"
-output: html_document
+title: "Assignment 6 Response"
+author: "Timothy Lee"
+date: "14/11/2019"
+output:
+  html_notebook:
+  pdf_document: default
+  html_document: default
 ---
-#Addignment 6
+#Assignment 6
 
 In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
 
@@ -16,8 +19,10 @@ assignment (numeric) - A student's average grade for the course assignments
 ##Part I
 
 #Packages
-```{r}
+```{r message FALSE}
 library(rpart)
+library(dplyr)
+library(readr)
 ```
 
 #Data
@@ -25,7 +30,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,15 +38,17 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ grade + 
+                   assignment,
+                 data = M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
 
-post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree1, file = "tree1.ps", title = "MOOC1") #This creates a pdf image of the tree
 
 ```
 
@@ -52,12 +59,14 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.058182)
 
 #Visualize this tree and compare it to the one you generated earlier
-
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree2, file = "tree2.ps", title = "MOOC2") #This creates a pdf image of the tree
 ```
+
+It's the same tree, but it stops splitting after the first split, instead of splitting one more time
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
@@ -66,20 +75,90 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+#Tree 1 confusion matrix
+tree1_conf_mat <- table(M2$certified, M2$predict1)
+tree1_conf_mat
 
-table(M2$certified, M2$predict2)
+#Tree 2 confusion matrix
+tree2_conf_mat <- table(M2$certified, M2$predict2)
+tree2_conf_mat
 
+#Formatting
+cat("\n 1 - Accuracy = \n")
+
+#Calculate error as 1 - accuracy
+tree1_error <- 1 - ((tree1_conf_mat[1,1] + tree1_conf_mat[2,2])/length(M2$certified))
+tree1_error
+
+tree2_error <- 1 - ((tree2_conf_mat[1,1] + tree2_conf_mat[2,2])/length(M2$certified))
+tree2_error
 ```
+
+*Tree 2 has a higher accuracy/lower error rate*
 
 ##Part III
 
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
+```{r message = FALSE}
+#Get Student record table
+UMich_student.course <- read_csv("https://raw.githubusercontent.com/bkoester/PLA/master/student.course.csv")
+
+
+x <- filter(UMich_student.course, DIV == "O")
+```
+
+#### Codebook
+
+* ANONID - Anonymous ID
+* SUBJECT - Academic Subject
+* CATALOG_NBR - Course code? E.g. ACC 272
+* GRD_PTS_PER_UNIT - Grade Points Per Unit
+* GPAO - GPA in other classes
+* DIV - ACADEMIC DIVISION (E - Engineering, H - Humanities, O - Undergraduate Research, P - Business/Accounting/Finance, S - Science, SS - Social Science)
+* ANON_INSTR_ID - ANON INSTRUCTOR ID
+* TERM - Term number (see term.table.txt on the website)
+
+Will choose GPAO as outcome variable
+
 ```{r}
+#First Model
+#Use all available variables to predict GPAO
+c.tree_model_1 <- rpart(GPAO ~ CATALOG_NBR + SUBJECT + GRD_PTS_PER_UNIT + DIV + ANON_INSTR_ID + TERM,
+                        data = UMich_student.course)
+
+#Check the results from the classifcation tree using the printcp() command
+printcp(c.tree_model_1)
+
+#Plot your tree
+post(c.tree_model_1, file = "tree3.ps", title = "Model 1") #This creates a pdf image of the tree
 
 ```
 
+```{r}
+#Second Model
+#Extract two variables to predict GPAO - Subject and term
+#If Grade inflation is a thing, later terms should have higher GPAO
+#If some subjects are easier to get As in, subject should predict GPAO (presuming that students taking a subject would be more likely to take other subjects 
+#in that area)
+c.tree_model_2 <- rpart(GPAO ~ SUBJECT + TERM,
+                        data = UMich_student.course)
+
+#Check the results from the classifcation tree using the printcp() command
+printcp(c.tree_model_2)
+
+#Plot your tree
+post(c.tree_model_2, file = "tree4.ps", title = "Model 2") #This creates a pdf image of the tree
+
+```
+
+*Two models were used to predict Student's GPA in all other classes. The first model used all other variables. The second model used two variables - subject a student is enrolled in and the term.*
+
+*The first model generates 6 splits, with a 10-fold CV error of 0.67629 and standard error of 0.0032569. I decided not to prune the model given that this is the lowest error rate reported among all splits, and there was no substantial difference between the CV standard error in this level of the tree relative to other levels of the tree.*
+
+*The second model generates one split, with a 10-fold CV error of 0.9876 and standard error of 0.0035252. Since there was only one split with a negligible increase in standard error and a minimal decrease in 10-fold CV error, the tree at the level of 1 split was retained.*
+
+*Overall, the first model generates a better tree as it has a lower cross-validation error.*
 
 ### To Submit Your Assignment
 
