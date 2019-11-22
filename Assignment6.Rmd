@@ -59,6 +59,7 @@ post(c.tree2, file = "tree2.ps", title = "MOOC")
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
+A: Prediction 1 (i.e., tree 1) has a lower error rate. 
 
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
@@ -69,3 +70,40 @@ table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
 ```
+
+
+##Part III
+
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(rpart)
+library(party)
+D1 <- read.csv("student.record.csv", header = TRUE)
+## outcome variable: HSGPA
+## model 1 (raw variables): LAST_ACT_MATH_SCORE and LAST_SATI_MATH_SCORE
+c.tree3 <- rpart(SEX ~ LAST_ACT_MATH_SCORE + LAST_SATI_MATH_SCORE, method = "class", data = D1)
+post(c.tree3, file = "tree3.ps", title = "SEX")
+
+## model 2 PC1: LAST_SATI_TOTAL_SCORE and LAST_ACT_COMP_SCORE
+D3 <- select(D1, 4:12, 20:22)
+D3 <- scale(D3, center = TRUE)
+D3 <- na.omit(D3)
+pca <- prcomp(D3, center = TRUE)
+D4 <- as.data.frame(pca$rotation)
+loading <- abs(pca$rotation)
+c.tree4 <- rpart(SEX ~ LAST_SATI_TOTAL_SCORE + LAST_ACT_COMP_SCORE, method = "class", data = D1)
+post(c.tree4, file = "tree4.ps", title = "SEX")
+
+##comparison
+D2 <- select(D1, 4:13, 20:22)
+D2$predict1 <- predict(c.tree3, D2, type = "class")
+D2$predict2 <- predict(c.tree4, D2, type = "class")
+t1 <- table(D2$SEX, D2$predict1)
+t2 <- table(D2$SEX, D2$predict2)
+```
+
+### To Submit Your Assignment
+Please submit your assignment by first "knitting" your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.
