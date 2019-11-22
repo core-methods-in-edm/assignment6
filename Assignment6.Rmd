@@ -52,7 +52,7 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = 0.058182 )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.05 )#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -79,20 +79,18 @@ Choose a data file from the (University of Michigan Open Data Set)[https://githu
 ```{r}
 D1 <- read.csv("student.course.csv", header = TRUE)
 
-c.tree3 <- rpart( ~ , method="class", data=D1)
+c.tree3 <- rpart( GPAO ~ SUBJECT + TERM + ANONID, method="class", data=D1)
 printcp(c.tree3)
 post(c.tree3, file = "tree3.ps", title = "student.course") #This creates a pdf image of the tree
 
-c.tree4 <- prune(c.tree1, cp = )
+c.tree4 <- prune(c.tree1, cp = 0.05)
+printcp(c.tree4)
 post(c.tree4, file = "tree4.ps", title = "student.course") #This creates a pdf image of the tree
 
-D2$predict1 <- predict(c.tree3, D2, type = "class")
-D2$predict2 <- predict(c.tree4, D2, type = "class")
+D1$predict1 <- predict(c.tree3, D1, type = "class")
+D1$predict2 <- predict(c.tree4, D1, type = "class")
 
-table(D2$ , D2$predict1)
-table(D2$ , D2$predict2)
-
-printcp(c.tree4)
+table(D1$predict1, D1$predict2)
 
 ```
 
