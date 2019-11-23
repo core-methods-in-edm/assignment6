@@ -1,0 +1,87 @@
+---
+title: "Assignment6"
+author: "yixiao"
+date: "2019/11/23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Part I
+
+#Packages
+```{r}
+library(rpart)
+
+library(rpart.plot)
+```
+
+#Data
+```{r}
+#Upload the data sets MOOC1.csv and MOOC2.csv
+M1 <- read.csv("MOOC1.csv", header = TRUE)
+M2 <- read.csv("MoOC2.csv", header = TRUE)
+```
+
+#Decision tree
+```{r}
+#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
+c.tree1 <- rpart(certified~grade+assignment, data=M1)
+#Check the results from the classifcation tree using the printcp() command
+printcp(c.tree1)
+#Plot your tree
+rpart.plot(c.tree1)
+post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+```
+##Part II
+
+```{r}
+c.tree2 <- prune(c.tree1, cp = 0.058182)#Set cp to the level at which you want the tree to end
+#Visualize this tree and compare it to the one you generated earlier
+rpart.plot(c.tree2)
+post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+```
+
+```{r}
+M2$predict1 <- predict(c.tree1, M2, type = "class")
+M2$predict2 <- predict(c.tree2, M2, type = "class")
+T1 <- table(M2$certified, M2$predict1)
+T1
+T2 <- table(M2$certified, M2$predict2)
+T2
+```
+
+```{r}
+# true positive
+T1[2,2]/sum(T1)
+# true negative
+T1[1,1]/sum(T1)
+```
+
+### Model 2
+```{r}
+# true positive
+T2[2,2]/sum(T2)
+# true negative
+T2[1,1]/sum(T2)
+```
+## Part III
+
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+
+```{r}
+D1 <- read.csv("student.course.csv", header=TRUE)
+c.tree3 <- rpart(GPAO~GRD_PTS_PER_UNIT+ANONID, data=D1)
+printcp(c.tree3)
+library(dplyr)
+D2 <- D1 %>% select(-SUBJECT, -DIV)
+D2 <- scale(D2, center = TRUE)
+pca <- prcomp(D2, scale = TRUE)
+D3 <-data.frame(pca$x)
+D4 <- bind_cols(D1, D3)
+c.tree4 <- rpart(GPAO~PC1+PC2, data=D4)
+printcp(c.tree4)
+```
+
