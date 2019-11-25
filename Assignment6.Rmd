@@ -25,7 +25,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,15 +33,19 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(as.factor(certified) ~ grade + assignment, method = "class", data = M1)
+c.tree <-  rpart(as.factor(certified) ~ forum.posts + grade + assignment, method = "class", data = M1)
+## I use grade and assignment because the scale of forum.posts is too large.
 
 #Check the results from the classifcation tree using the printcp() command
 
-
-
+printcp(c.tree1)
+printcp(c.tree)
+  
 #Plot your tree
 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+post(c.tree, file = "tree.ps", title = "MOOC")
 
 ```
 
@@ -52,7 +56,8 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+
+c.tree2 <- prune(c.tree1, cp = c.tree1$cptable[2,"CP"])#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -66,10 +71,16 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+table1<-table(M2$certified, M2$predict1)
 
-table(M2$certified, M2$predict2)
+table2<-table(M2$certified, M2$predict2)
 
+accuracy1 = sum(diag(table1))/sum(table1)
+accuracy2 = sum(diag(table2))/sum(table2)
+
+accuracy1
+accuracy2
+## c.tree2 has a lower error rate since the accuracy rate of c.tree2 is higher.
 ```
 
 ##Part III
@@ -77,9 +88,83 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+# Read data
+library(dplyr)
+D1<-read.csv("student.record.csv", header=TRUE)
+D2<-select(D1,MAJOR1_DESCR,HSGPA,LAST_ACT_MATH_SCORE,LAST_ACT_ENGL_SCORE,SEX,MAJOR1_DEPT)
+D3<-filter(D2,HSGPA != 0) 
+D3<-na.omit(D3)
 
+## transformation of major
+# install.packages("stringr")
+library(stringr)
+D3$DIP<-word(D3$MAJOR1_DESCR, -1)
+D3$DIP[which(D3$DIP=="Fresh")]<-"BS"
+D3$DIP[which(D3$DIP=="ChemE")]<-"BSE"
+D3$DIP[which(D3$DIP=="CompS")]<-"BSE"
+D3$DIP[which(D3$DIP=="CS")]<-"BSE"
+D3$DIP[which(D3$DIP=="ElecE")]<-"BSE"
+D3$DIP[which(D3$DIP=="BioE")]<-"BSE"
+D3$DIP[which(D3$DIP=="Aero")]<-"BSE"
+D3$DIP[which(D3$DIP=="Sc")]<-"BSE"
+D3$DIP[which(D3$DIP=="Chem")]<-"BS"
+D3$DIP[which(D3$DIP=="BSChem")]<-"BS"
+
+A1<-sort(table(D3$DIP),decreasing=TRUE)[1:5]
+D4<-D3[which(D3$DIP %in% rownames(A1)),]
+
+# the first model
+c.tree3 <- rpart(as.factor(MAJOR1_DESCR) ~ as.factor(SEX) + HSGPA + LAST_ACT_MATH_SCORE + LAST_ACT_ENGL_SCORE, method = "class", data = D3)
+printcp(c.tree3) 
+
+
+# the second model
+c.tree4<-rpart(as.factor(DIP) ~ as.factor(SEX) + scale(HSGPA) + scale(LAST_ACT_MATH_SCORE) + scale(LAST_ACT_ENGL_SCORE), method = "class", data = D4)
+printcp(c.tree4)
+
+
+# install.packages(("rpart.plot"))
+library(rpart.plot)
+rpart.plot(c.tree4)
+
+library(randomForest)
+model1<-randomForest(as.factor(DIP) ~ SEX + HSGPA + LAST_ACT_MATH_SCORE + LAST_ACT_ENGL_SCORE, data = D4)
+print(model1)
+
+
+## The second model is much better than the first model since the combination of error and standard deviation becomes smaller.
+## The first model is used to predict students'majors. The second model is used to predict students' diploma. ## In the first model, raw variables are used.
+## In the second model, majors are classified into several categories depending on the diploma. Highschool GPA and last ACT Math score are scaled. Variables actually used are sex, hsgpa and last ACT Math score, which to the extent affect the diploma students will get. 
+## The outcome of second model shows that students with lower last ACT Math scores tend to chosse Major of Bachelor of Arts. Female who has higher ACT Math scores and highschool GPA tends to choose Bachelor of Science and Arts. Males who has higher ACT Math scores tends to choose Bachelor of Science and Engineering.
 ```
 
+```{r}
+# combine two datasets
+F1<-read.csv("student.course.csv", header=TRUE)
+F2<-inner_join(D1,F1,by="ANONID")
+F3<-select(F2,MAJOR1_DESCR,HSGPA,LAST_ACT_MATH_SCORE,LAST_ACT_ENGL_SCORE,SEX,ADMIT_TERM, MAJOR1_DEPT,GPAO,GRD_PTS_PER_UNIT,SUBJECT)
+F3<-filter(F3,HSGPA != 0) 
+F3<-na.omit(F3)
+F3<-unique(F3)
+F3$GRADE<-ifelse(F3$GRD_PTS_PER_UNIT>=3,4,ifelse(F3$GRD_PTS_PER_UNIT>=2,3,ifelse(F3$GRD_PTS_PER_UNIT>=1,2,1)))
+F4<-F3[which(F3$SUBJECT=="MATH"),]
+
+# the first model
+c.tree5<-rpart(GRD_PTS_PER_UNIT ~ as.factor(SEX) + HSGPA + LAST_ACT_MATH_SCORE + GPAO, method = "class", data = F4)
+printcp(c.tree5)
+
+# the second model
+c.tree6<-rpart(as.factor(GRADE) ~ as.factor(SEX) + scale(HSGPA) + scale(LAST_ACT_MATH_SCORE) + scale(GPAO), method = "class", data = F4)
+printcp(c.tree6)
+
+
+# install.packages("randomForest")
+library(randomForest)
+model2<-randomForest(as.factor(GRADE) ~ SEX + HSGPA + LAST_ACT_MATH_SCORE + GPAO, data = F4)
+print(model2)
+## The second model is better than the first model.
+## Both models use GPAO to predict grades of Math. The model is used to predict the grades of Math. Grades of Math depend on GPA of other courses.
+```
 
 ### To Submit Your Assignment
 
