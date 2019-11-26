@@ -1,7 +1,8 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
+author: "Zifan Cao"
 date: "11/16/2016"
+
 output: html_document
 ---
 #Addignment 6
@@ -18,6 +19,8 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+install.packages("rpart.plot")
+library(rpart.plot)
 ```
 
 #Data
@@ -25,7 +28,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv",header = TRUE)
 
 ```
 
@@ -33,14 +36,14 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ grade + assignment, method="class",data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
-
+rpart.plot(c.tree1)
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
 
 ```
@@ -52,7 +55,7 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.058182 )#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -66,10 +69,13 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+T1<-table(M2$certified, M2$predict1)
 
-table(M2$certified, M2$predict2)
-
+T2<-table(M2$certified, M2$predict2)
+printcp(c.tree2)
+E1 <- (T1[2,2]+T1[1,1])/sum(T1)
+E2 <- (T2[2,2]+T2[1,1])/sum(T2)
+#Thus, we calculate the accuracy of the two tables and E2 is more accurate.
 ```
 
 ##Part III
@@ -77,9 +83,33 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+A1<-read.csv("student.record.csv",header = TRUE)
+library(tidyr)
 
+A2 <- A1[,c(3:13)]
+A3 <- na.omit(A2)
+c.treea1 <- rpart(LAST_SATI_TOTAL_SCORE ~ LAST_ACT_ENGL_SCORE + LAST_ACT_MATH_SCORE,data=A1)
+
+#Check the results from the classifcation tree using the printcp() command
+printcp(c.treea1)
+
+
+#Plot MY tree with raw data
+rpart.plot(c.treea1)
+post(c.treea1, file = "treea1.ps", title = "PLA") #This creates a pdf image of the tree
+
+#clean data
+library(dplyr)
+A4<- A3%>% select("LAST_SATI_TOTAL_SCORE","LAST_ACT_ENGL_SCORE","LAST_ACT_MATH_SCORE")
+A3<-scale(A3,center = TRUE)
+pca<-prcomp(A4,scale = TRUE)
+A4 <-data.frame(pca$x)
+A <- bind_cols(A3, A4)
+c.treea2 <-rpart(LAST_SATI_TOTAL_SCORE~PC1+PC2, data = A)
+printcp(c.treea2)
+rpart.plot(c.treea2)
+post(c.treea2,file="treea2.ps", title = "PLA")
 ```
-
 
 ### To Submit Your Assignment
 
