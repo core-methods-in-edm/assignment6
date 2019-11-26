@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
+author: "Yiwen Ma"
 date: "11/16/2016"
 output: html_document
 ---
@@ -25,7 +25,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,17 +33,21 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree <- rpart(as.factor(certified) ~ forum.posts+grade+assignment, method = "class", data = M1)
+c.tree1 <- rpart(as.factor(certified) ~ grade+assignment, method = "class", data = M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree)
+printcp(c.tree1)
 
 
 #Plot your tree
-
+post(c.tree, file = "tree.ps", title = "MOOC") 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
 
 ```
+
+When including 3 variables(c.tree), the desicion tree is overwhelmed by forum.posts, who has a larger range from 0-200. Thus, choosing only grade and assignment as variables in the desicion tree(c.tree1) is much better and get a more balanced tree.
 
 ##Part II
 
@@ -52,8 +56,8 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
-
+c.tree2 <- prune(c.tree1, cp = 0.058182 )#Set cp to the level at which you want the tree to end
+printcp(c.tree2)
 #Visualize this tree and compare it to the one you generated earlier
 
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
@@ -66,20 +70,112 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+table1 <- table(M2$certified, M2$predict1)
 
-table(M2$certified, M2$predict2)
+table2 <- table(M2$certified, M2$predict2)
 
+accuracy1 <- sum(diag(table1))/sum(table1)
+accuracy2 <- sum(diag(table2))/sum(table2)
+
+
+accuracy1
+accuracy2
 ```
+
+Tthe first prediction model has an accuracy of 0.2186, the second prediction model has an accuracy of 0.5363, which is much better. Thus, the second tree has a lower error rate.
 
 ##Part III
 
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+library('randomForest')
+
+data2 <- read.csv("student.record.csv", header = TRUE)
+#Choose numerical value from data 2
+data3 <- data2[,c(3:9,13)]
+
+# Deal with NA
+data4 <- na.omit(data3)
+data5 <- subset(data4, data4$MAJOR1_DESCR != "")
+```
+
+
+# model 1 Use raw variables
+
+```{r}
+model1 <- rpart(as.factor(MAJOR1_DESCR) ~HSGPA+ LAST_ACT_ENGL_SCORE+LAST_ACT_MATH_SCORE+LAST_ACT_READ_SCORE+LAST_ACT_SCIRE_SCORE+LAST_ACT_COMP_SCORE+as.factor(SEX), method = "class", data = data5)
+
+printcp(model1)
+
+# CP nsplit rel error  xerror      xstd
+# 1 0.02168      0   1.00000 1.00000 0.0012575
+# 2 0.01000      1   0.97832 0.97832 0.0014301
+```
+
+# model 2 Use trasformed data
+
+```{r}
+library(stringr)
+#Conclude the MAJOR1_DESCR into larger group
+data5$DIP<-word(data5$MAJOR1_DESCR, -1)
+data5$DIP[which(data5$DIP=="Fresh")]<-"BS"
+data5$DIP[which(data5$DIP=="ChemE")]<-"BSE"
+data5$DIP[which(data5$DIP=="BSChem")]<-"BS"
+data5$DIP[which(data5$DIP=="Chem")]<-"BS"
+data5$DIP[which(data5$DIP=="CompS")]<-"BSE"
+data5$DIP[which(data5$DIP=="ElecE")]<-"BSE"
+data5$DIP[which(data5$DIP=="CS")]<-"BSE"
+data5$DIP[which(data5$DIP=="Aero")]<-"BSE"
+data5$DIP[which(data5$DIP=="Sc")]<-"BSE"
+data5$DIP[which(data5$DIP=="E")]<-"BSE"
+
+#Select the top 5 category for prediction
+s1 <- sort(table(data5$DIP),decreasing = TRUE)[1:5]
+data6 <- data5[which(data5$DIP %in% rownames(s1)),]
+
+#sacle the dataset
+library(dplyr)
+library(rpart.plot)
+data6<-filter(data6,HSGPA != 0) 
+ind <- sapply(data6, is.numeric)
+data7<- as.data.frame(lapply(data6[ind], scale))
+data7 <- cbind(data7, data6[,8:9])
+
+#model2
+model2 <- rpart(as.factor(DIP) ~HSGPA+ LAST_ACT_ENGL_SCORE+LAST_ACT_MATH_SCORE+LAST_ACT_READ_SCORE+LAST_ACT_SCIRE_SCORE+LAST_ACT_COMP_SCORE+as.factor(SEX), method = "class", data = data7)
+
+printcp(model2)
+#xerror:0.89035
+
+rpart.plot(model2)
+```
+
+# model 3 Use random forest
+
+```{r}
+
+model3 <- randomForest(as.factor(DIP) ~HSGPA+ LAST_ACT_ENGL_SCORE+LAST_ACT_MATH_SCORE+LAST_ACT_READ_SCORE+LAST_ACT_SCIRE_SCORE+LAST_ACT_COMP_SCORE+SEX, data = data7)
+
+#number of trees
+plot(model3)
+
+print(model3)
+#OOB estimate of  error rate: 52.67%
 
 ```
 
+# Conclusion
+
+According to 3 models above,
+
+Model1 : used raw data as input and got nearly 97.832% of error rate.
+
+Model2 : After combined different types of major into larger group(eg:BA,BE,BSE), and scaled the ACT score, the error rate decrese to 90%, which is much lower than the model1.
+
+This model is used to predict the diploma which student choosed based on the ACT score. The result seems reasonable. Student with lower ACT math score will choose Bachelor of Arts. Students with both high math score and high highschool GPA will tend to choose Bachelor of Sciences. Besides, gender also plays an important role in major, male will prefer BSE (Engineering), and female with high math score will choose BA and BS.
+
+Model3 : After using random forest to further improve the model, the error rate droped to 52.67%.
 
 ### To Submit Your Assignment
 
