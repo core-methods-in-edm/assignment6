@@ -476,7 +476,7 @@ printcp(c.tree3)</code></pre>
 ## 
 ##         CP nsplit rel error  xerror      xstd
 ## 1 0.221879      0   1.00000 1.00000 0.0072533
-## 2 0.017563      1   0.77812 0.77833 0.0070458
+## 2 0.017563      1   0.77812 0.77864 0.0070463
 ## 3 0.010000      3   0.74300 0.76030 0.0070131</code></pre>
 <pre class="r"><code>#I just got the data from the excel they have we have to use those sorce and predit
 
@@ -518,9 +518,9 @@ printcp(c.tree4)</code></pre>
 ## 
 ## n= 19842 
 ## 
-##        CP nsplit rel error xerror      xstd
-## 1 0.14988      0   1.00000 1.0000 0.0072533
-## 2 0.01000      1   0.85012 0.8597 0.0071629</code></pre>
+##        CP nsplit rel error  xerror      xstd
+## 1 0.14988      0   1.00000 1.00000 0.0072533
+## 2 0.01000      1   0.85012 0.85826 0.0071613</code></pre>
 <pre class="r"><code># predict the sex 
 
 D4$predict1 &lt;- predict(c.tree3, D4 , type = &quot;class&quot;)
