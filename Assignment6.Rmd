@@ -56,7 +56,7 @@ If we are worried about overfitting we can remove nodes form our tree using the 
 
 ```{r}
 # Set cp to the level at which you want the tree to end
-c.tree2 <- prune(c.tree1, cp = 0.01)
+c.tree2 <- prune(c.tree1, cp = 0.014545)
 
 # Visualize this tree and compare it to the one you generated earlier
 post(c.tree2, file = "tree2.ps", title = "MOOC") # This creates a pdf image of the tree
@@ -68,7 +68,7 @@ rpart.plot(x = c.tree2, yesno = 2, type = 0, extra = 0, main = "MOOC")
 
 Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?  
 
-Two trees have same error rate.
+Two trees have the same error rate.
 ```{r}
 # Prediction using original tree
 M2$predict1 <- predict(c.tree1, M2, type = "class")
