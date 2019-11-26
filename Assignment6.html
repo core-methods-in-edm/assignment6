@@ -454,17 +454,24 @@ table(M2$certified, M2$predict1)</code></pre>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>student_course&lt;-read.csv(&quot;student.course.csv&quot;,header = TRUE)
+
 student_course&lt;-filter(student_course, DIV == &quot;P&quot;)
+
 #Create new column of grade levels
 student_course$Grade_Level=ifelse(student_course$GPAO&gt;3.25,&quot;A&quot;,ifelse(student_course$GPAO&gt;2.25,&quot;B&quot;,ifelse(student_course$GPAO&gt;1.00,&quot;C&quot;,&quot;F&quot;)))
+
 #split data into train set and test set
 set.seed(123)
+
 train &lt;- sample(1:nrow(student_course), size=0.8*nrow(student_course))
+
 testDS &lt;- student_course[-train,]
+
 trainDS &lt;- student_course[train,]
 
 #classification tree
 c.tree3&lt;-rpart(Grade_Level ~ .-GPAO,trainDS)
+
 printcp(c.tree3)</code></pre>
 <pre><code>## 
 ## Classification tree:
@@ -482,9 +489,12 @@ printcp(c.tree3)</code></pre>
 ## 2 0.015465      3   0.81171 0.81999 0.0057272
 ## 3 0.010000      5   0.78078 0.78397 0.0056399</code></pre>
 <pre class="r"><code>post(c.tree3,file = &quot;tree3.ps&quot;, title = &quot;course 1&quot;)
+
 prediction&lt;-predict(c.tree3,testDS)
+
 #Another classification tree based on other variables
 c.tree4&lt;-rpart(Grade_Level ~ GRD_PTS_PER_UNIT + SUBJECT,trainDS)
+
 printcp(c.tree4)</code></pre>
 <pre><code>## 
 ## Classification tree:
@@ -502,8 +512,9 @@ printcp(c.tree4)</code></pre>
 ## 2 0.015465      3   0.81171 0.81776 0.0057219
 ## 3 0.010000      5   0.78078 0.79230 0.0056606</code></pre>
 <pre class="r"><code>post(c.tree3,file = &quot;tree4.ps&quot;, title = &quot;course 1&quot;)
+
 prediction2&lt;-predict(c.tree4,testDS)
-#The second model is slightly better.Since the xerror of first model is 0.81999 and the xerror of the second model is 0.81776, the second model has a slight edge over the first model. They both have 5 splits and 5 nodes.</code></pre>
+#(I am not sure about this interpretation)The second model is slightly better.Since the xerror of first model is 0.81999 and the xerror of the second model is 0.81776, the second model has a slight edge over the first model. They both have 5 splits and 5 nodes.</code></pre>
 <div id="to-submit-your-assignment" class="section level3">
 <h3>To Submit Your Assignment</h3>
 <p>Please submit your assignment by first “knitting” your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.</p>

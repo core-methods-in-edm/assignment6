@@ -79,29 +79,43 @@ Choose a data file from the (University of Michigan Open Data Set)[https://githu
 
 ```{r}
 library(dplyr)
+
 library(tidyverse)
 
 student_course<-read.csv("student.course.csv",header = TRUE)
+
 student_course<-filter(student_course, DIV == "P")
+
 #Create new column of grade levels
 student_course$Grade_Level=ifelse(student_course$GPAO>3.25,"A",ifelse(student_course$GPAO>2.25,"B",ifelse(student_course$GPAO>1.00,"C","F")))
+
 #split data into train set and test set
 set.seed(123)
+
 train <- sample(1:nrow(student_course), size=0.8*nrow(student_course))
+
 testDS <- student_course[-train,]
+
 trainDS <- student_course[train,]
 
 #classification tree
 c.tree3<-rpart(Grade_Level ~ .-GPAO,trainDS)
+
 printcp(c.tree3)
+
 post(c.tree3,file = "tree3.ps", title = "course 1")
+
 prediction<-predict(c.tree3,testDS)
+
 #Another classification tree based on other variables
 c.tree4<-rpart(Grade_Level ~ GRD_PTS_PER_UNIT + SUBJECT,trainDS)
+
 printcp(c.tree4)
+
 post(c.tree3,file = "tree4.ps", title = "course 1")
+
 prediction2<-predict(c.tree4,testDS)
-#The second model is slightly better.Since the xerror of first model is 0.81999 and the xerror of the second model is 0.81776, the second model has a slight edge over the first model. They both have 5 splits and 5 nodes.
+#(I am not sure about this interpretation)The second model is slightly better.Since the xerror of first model is 0.81999 and the xerror of the second model is 0.81776, the second model has a slight edge over the first model. They both have 5 splits and 5 nodes.
 ```
 
 
