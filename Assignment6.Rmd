@@ -18,6 +18,7 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+D1<- read.csv("MOOC2.csv",header = TRUE)
 ```
 
 #Data
