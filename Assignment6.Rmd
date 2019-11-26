@@ -18,6 +18,90 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+library(caTools)
+library(rpart.plot)
+
+M1 <- read.csv("MOOC1.csv", header = TRUE)
+M2 <- read.csv("MOOC2.csv", header = TRUE)
+
+# Using the rpart package generate a classification tree predicting certified 
+# from the other variables in the M1 data frame. Which variables should you use?
+
+c.tree1 <- rpart(certified ~ grade + assignment + forum.posts, data = M1)
+prp(c.tree1)  
+printcp(c.tree1)
+
+# The heading "xerror" in the printcp table stands for "cross validation error", 
+# it is the error rate of assigning students to certified/uncertified of the model 
+# averaged over 10-fold cross validation. CP stands for "Complexity Parameter" and 
+# represents the cost to error for adding a node to the tree. Notice it decreases 
+# as we add more nodes to the tree which implies that more nodes make better predictions. 
+# However, more nodes also mean that we may be making the model less generalizable, 
+# this is known as "overfitting".
+
+c.tree2 <- prune(c.tree1, cp = 2)
+prp(c.tree2)  
+printcp(c.tree2)
+
+M2$predict1 <- predict(c.tree1, M2, type = "class")
+M2$predict2 <- predict(c.tree2, M2, type = "class")
+table(M2$certified, M2$predict1)
+table(M2$certified, M2$predict2)
+
+# Part III 
+
+d1 <- read.csv("student.course1.txt", header = TRUE)
+d2 <- read.csv("student.record2.txt", header = TRUE)
+# colnames(d1)
+# [1] "ANONID"           "SUBJECT"          "CATALOG_NBR"      "GRD_PTS_PER_UNIT" "GPAO"            
+# [6] "DIV"              "ANON_INSTR_ID"    "TERM"   
+# colnames(d2)
+# [1] "MAJOR3_DESCR"          "MAJOR2_DESCR"          "MAJOR1_DESCR"          "HSGPA"                
+# [5] "LAST_ACT_ENGL_SCORE"   "LAST_ACT_MATH_SCORE"   "LAST_ACT_READ_SCORE"   "LAST_ACT_SCIRE_SCORE" 
+# [9] "LAST_ACT_COMP_SCORE"   "LAST_SATI_VERB_SCORE"  "LAST_SATI_MATH_SCORE"  "LAST_SATI_TOTAL_SCORE"
+# [13] "SEX"                   "STDNT_GROUP1"          "STDNT_GROUP2"          "MAJOR1_DEPT"          
+# [17] "MAJOR2_DEPT"           "MAJOR3_DEPT"           "ANONID"                "ADMIT_TERM"           
+# [21] "MAJOR1_TERM"           "MAJOR2_TERM"           "MAJOR3_TERM"          
+
+# Data Preprocessing
+library(tidyverse)
+allmodel <- rpart(HSGPA ~ ., data = d2)
+printcp(allmodel)
+
+#Root node error: 237849/125222 = 1.8994
+#n=125222 (13666 observations deleted due to missingness)
+
+#CP nsplit rel error  xerror      xstd
+#1 0.030237      0   1.00000 1.00001 0.0076287
+#2 0.029273      1   0.96976 0.97118 0.0076540
+#3 0.011889      2   0.94049 0.94314 0.0076338
+#4 0.010000      3   0.92860 0.93361 0.0076313
+
+d1final<- data.frame(d1[,5]) # GPAO
+d2final <- select(d2, HSGPA, LAST_ACT_COMP_SCORE, LAST_SATI_TOTAL_SCORE)
+d1final <- na.omit(d1final)
+d2final <- na.omit(d2final)
+
+# Model 1 based on Raw Data
+model1 <- rpart(HSGPA ~ ., data = d2final)
+printcp(model1)
+# CP         nsplit    rel errorxerror   xstd
+# 1 0.014423      0   1.00000 1.00007 0.012217
+# 2 0.010000      1   0.98558 0.98819 0.012144
+
+# Model 2 based on test train split
+library(caTools)
+set.seed(123)
+split = sample.split(d2final$HSGPA, SplitRatio = 0.8) 
+training_set = subset(d2final, split == TRUE) # 80% training set
+test_set = subset(d2final, split == FALSE) # 20 % test set
+
+model2 <- rpart(HSGPA ~ ., data = test_set)
+printcp(model2)
+#CP         nsplit  rel error xerror     xstd
+#1 0.016159      0   1.00000 1.0003 0.027331
+#2 0.010000      1   0.98384 0.9886 0.027179
+
 ```
 
 #Data
@@ -25,7 +109,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv()
 
 ```
 
