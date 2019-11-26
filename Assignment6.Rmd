@@ -18,6 +18,7 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+library(tidyr)
 ```
 
 #Data
@@ -25,19 +26,21 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <-read.csv("MOOC2.csv",header=TRUE)
 
 ```
 
 #Decision tree
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
-
-c.tree1 <- 
+#using grade for course exam and course assignment.if we include forum.post it will dominant the prediction. Do not know why.
+#M1%>% mutate_at(c(2,3,4), funs(c(scale(.))))
+# or M1[c(2,3,4)]<-scale(M1[c(2,3,4)])
+c.tree1 <- rpart(factor(certified)~grade+assignment,method="class", data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
 
 #Plot your tree
 
@@ -52,16 +55,19 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
-
+c.tree2 <- prune.rpart(c.tree1, cp = 0.058182 )#Set cp to the level at which you want the tree to end
+#cp2=0.058182
 #Visualize this tree and compare it to the one you generated earlier
 
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+#grade variable is not longer exist. 
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
+
+
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
@@ -69,6 +75,43 @@ M2$predict2 <- predict(c.tree2, M2, type = "class")
 table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
+# The second tree has a lower error rate. However, based on the cross validation metrics,the original 2 split should be better, however, it has lower accruacy. Should try different model.
+#install.packages("neuralnet")
+library(neuralnet)
+nn=neuralnet(certified~forum.posts+grade+assignment,data=M1, hidden=3,act.fct = "logistic",
+                linear.output = FALSE)
+plot(nn)
+Predict=compute(nn,M2)
+predict3<-Predict$net.result
+predict3<-predict3[,1]
+predict3 <- ifelse(predict3>0.5, "yes", "no")
+M2<-cbind(M2,predict3)
+table(M2$certified,M2$predict3)
+#seems this one have similar accuracy with predict2 (2 nods one). still not very accurate.
+#install.packages("ranger")
+#install.packages("randomForest")
+#install.packages("pROC")
+library(pROC)
+library(ROCR)
+library(randomForest)
+library(ranger)
+rf<-randomForest(formula =certified~grade+assignment,data=M1)
+M2$predict4<-predict(rf,M2)
+table(M2$certified, M2$predict4)
+#accuracy is even lower......
+rgr1 <- ranger(factor(certified)~.,data = M1,
+               num.trees = 1000,respect.unordered.factors = T)
+prediction <- predict(rgr1,M2,type="response")
+#pred<-prediction(prob,M2$certified)#numeric variable
+
+M2$predict5<- prediction$predictions
+table(M2$certified,M2$predict5)
+
+#rgr2 <- ranger(factor(certified)~.,data = M1,
+               #num.trees = 1000,respect.unordered.factors = T,probability = T)
+#mean(ifelse(M2$certified==M2$predict5,1,0))
+#auc<-auc(roc(M2$certified,M2$predict5))
+#auc<- performance(prediction,measure='auc')@y.values[[1]]
 
 ```
 
@@ -77,7 +120,57 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+M3 <- read.csv("student.course.csv", header = TRUE)
+M4<-read.csv("student.record.csv")
 
+library(dplyr)
+library(rpart)
+# I decided to anlyze student.course dataset.
+# run a correlation plot to figure out relationship
+
+library(corrplot)
+
+#M3_sample<-M3[sample(nrow(M3), 10000), ]
+#M3_sample<-select(M3_sample,-SUBJECT,-DIV)
+#M3_sample<-scale(M3_sample)
+#M3_sample<-as.data.frame(M3_sample)
+#run prediction model with all variable except ID
+c.tree3 <- rpart(GPAO~GRD_PTS_PER_UNIT+TERM+CATALOG_NBR, method="anova", data=M3)
+printcp(c.tree3)
+post(c.tree3, file = "tree3.ps", title = "GPAO")
+#run correlation plot to figure out most correlated variables, I decided to choose the most related variables, GRD_PTS_PER_UNIT and TERM.
+COR<-select(M3,-SUBJECT,-DIV)
+COR<-scale(COR)
+COR<-cor(COR)
+corrplot<-corrplot(COR, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+c.tree4 <- rpart(GPAO~GRD_PTS_PER_UNIT+TERM,method="anova", data=M3)
+printcp(c.tree4)
+post(c.tree4, file = "tree4.ps", title = "GPAO")
+
+#predict something else, maybe subject
+c.tree5<-rpart(factor(DIV)~GPAO+GRD_PTS_PER_UNIT,method="class",data=M3)
+c.tree6<-rpart(factor(SUBJECT)~GPAO+GRD_PTS_PER_UNIT,method="class",data=M3)
+printcp(c.tree5) 
+printcp(c.tree6)
+#Seems like no correlation between DIV and SUBUJECT with GPAO and GRD_PTS_PER_UNIT??
+#By comparing cross validation metrices, the second model (with all related variables) has both lowest xerror & xstd
+#so I prefer using the original model with 4 splits. (However, slightly different)
+#If xerror and standard deviation is not that different everysplit, should I choose the smallest one? or should balance the number of split(less is better) with xerror and xstd as well.
+#might be using PCA (pc component to make a prediction model?)
+
+#seems like student course data not a good data to do prediction in different model. The only determint variable is grade_points_per_unit.
+
+M4<-select(M4,SEX,MAJOR1_DESCR,HSGPA,LAST_ACT_ENGL_SCORE,LAST_ACT_MATH_SCORE,LAST_ACT_READ_SCORE,LAST_ACT_SCIRE_SCORE,LAST_ACT_COMP_SCORE)
+M4<-na.omit(M4)
+c.tree7<-rpart(SEX~LAST_ACT_ENGL_SCORE+LAST_ACT_MATH_SCORE+LAST_ACT_READ_SCORE+LAST_ACT_SCIRE_SCORE+LAST_ACT_COMP_SCORE,method="class",data=M4)
+post(c.tree7, file = "tree7.ps", title = "SEX")
+printcp(c.tree7)
+c.tree8<-rpart(SEX~HSGPA+LAST_ACT_ENGL_SCORE+LAST_ACT_READ_SCORE+LAST_ACT_SCIRE_SCORE+LAST_ACT_COMP_SCORE,method="class",data=M4)
+printcp(c.tree8)
+#comparing by two models, the first model(c.tree7)has both less split,xerror and xstd. So I prefer the first model.
 ```
 
 
