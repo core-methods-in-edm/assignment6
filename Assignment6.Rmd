@@ -17,7 +17,10 @@ assignment (numeric) - A student's average grade for the course assignments
 
 #Packages
 ```{r}
+library(dplyr)
+library(tidyr)
 library(rpart)
+library(rpart.plot)
 ```
 
 #Data
@@ -25,7 +28,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,15 +36,17 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ assignment+grade, method="class", data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot(c.tree1)
+
 
 ```
 
@@ -52,11 +57,13 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = .06)#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot(c.tree2)
+
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
@@ -66,9 +73,31 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+for (i in 1:nrow(M2)){
+  if(M2$predict1[i]==M2$certified[i]){
+    M2$matchx[i]<-"Y"
+  }else{
+    M2$matchx[i]<-"N"
+  }
+}
 
-table(M2$certified, M2$predict2)
+for (i in 1:nrow(M2)){
+  if(M2$predict2[i]==M2$certified[i]){
+    M2$matchy[i]<-"Y"
+  }else{
+    M2$matchy[i]<-"N"
+  }
+}
+
+M2x<-M2 %>%
+  group_by(matchx)%>%
+  count(matchx)
+
+M2y<-M2 %>%
+  group_by(matchy)%>%
+  count(matchy)
+
+# C.Tree 2 works better; it is right 5363 as opposed to 2186 times.
 
 ```
 
@@ -78,8 +107,72 @@ Choose a data file from the (University of Michigan Open Data Set)[https://githu
 
 ```{r}
 
-```
+student.record <- read.csv("~/tmp/assignment6/student.record.csv", header=TRUE, stringsAsFactors = TRUE)
 
+
+
+#This is my raw variable analysis
+
+s.record<-student.record%>%
+  gather(key="Student ID", value = "Major", MAJOR1_DEPT, MAJOR2_DEPT, MAJOR3_DEPT)%>%
+  select(ANONID, LAST_ACT_ENGL_SCORE,LAST_ACT_MATH_SCORE,LAST_ACT_READ_SCORE,LAST_ACT_SCIRE_SCORE,LAST_ACT_COMP_SCORE,
+         HSGPA, STDNT_GROUP1)
+
+
+s.r1<-na.omit(s.record)
+colnames(s.r1)<-c("ID", "English", "Math", "Reading", "Science", "Comprehensive", "GPA", "Group")
+
+c.tree3 <- rpart(Group ~ GPA+Comprehensive+Science+Reading+English+Math+ID, method="class", data=s.r1)
+printcp(c.tree3)
+
+rpart.plot(c.tree3)
+
+#This is my PCA
+s.r2<-s.r1%>%
+  select(-c(Group, ID))
+
+pca <-prcomp(s.r2, scale. = TRUE)
+
+summary(pca)
+
+pca$rotation
+
+c.tree4 <- rpart(Group ~ English+Comprehensive+Science, method="class", data=s.r1)
+printcp(c.tree4)
+
+rpart.plot(c.tree4)
+
+s.r1$predict1 <- predict(c.tree3, s.r1, type = "class")
+s.r1$predict2 <- predict(c.tree4, s.r1, type = "class")
+
+for (i in 1:nrow(s.r2)){
+  if(s.r1$predict1[i]==s.r1$Group[i]){
+    s.r1$matchx[i]<-"Y"
+  }else{
+    s.r1$matchx[i]<-"N"
+  }
+}
+
+for (i in 1:nrow(s.r1)){
+  if(s.r1$predict2[i]==s.r1$Group[i]){
+    s.r1$matchy[i]<-"Y"
+  }else{
+    s.r1$matchy[i]<-"N"
+  }
+}
+
+# x is for predict1, y is for predict2
+
+s.r1x<-s.r1 %>%
+  group_by(matchx)%>%
+  count(matchx)
+
+s.r1y<-s.r1 %>%
+  group_by(matchy)%>%
+  count(matchy)
+
+```
+Of the two models, technically, the first raw analysis is correct more often than the second model. However, I have to question how valuable that analysis is for a couple of reasons. First and foremost, the margin of correctness that it has over the feature selected model is very small. Second, both decision trees are tested against the training sample, rather than a new test sample. I have to assume that there is a chance that decision tree is overfitted, and would want a new sample to see whether this second decision tree is actually weaker.
 
 ### To Submit Your Assignment
 
