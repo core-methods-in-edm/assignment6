@@ -1,10 +1,10 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
-date: "11/16/2016"
+author: "Fernando Carnauba"
+date: "11/25/2019"
 output: html_document
 ---
-#Addignment 6
+#Assignment 6
 
 In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
 
@@ -18,14 +18,18 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+library(party)
+library(rattle)
+library(RColorBrewer)
+library(dplyr)
+library(readr)
 ```
 
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- read.csv("MOOC1.csv", header = TRUE)
-
-M2 <- 
+M1 <- read.csv("~/R/HUDK/assignment6/MOOC1.csv", header = TRUE)
+M2 <- read.csv("~/R/HUDK/assignment6/MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,17 +37,18 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ forum.posts + grade +assignment, method="class", data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
-
+printcp(c.tree1)
 
 #Plot your tree
-
-post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+# post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+fancyRpartPlot(c.tree1, caption = NULL)
 
 ```
+# ANSWER: The algorithm automatically selects only "forum.posts" as a relevant variable for the three. It is actually quite striking to see in the tree plot that the threshold of 80 forum posts divides the sample almost perfectly. NEITHER of he 27% of students with less than 80 posts got a certificate, while vitually ALL (99%) of the students who posted 80 or more times did get a certificate. It seems quite reasonable, then, to only use forum.posts for building the tree. 
+
 
 ##Part II
 
@@ -52,33 +57,142 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0)#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
-
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+#post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+fancyRpartPlot(c.tree2, caption = NULL)
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
+ANSWER: Nothing different between the trees, since the first one already had only one variable taken into account, with an almost perfect match. I tried really hard to go back and set parameters to force the fisrt three to actually use the three variables, but I just couldn't make it work. So, for the sake of my learning experience with comparing error rates, I will create a third three, that uses GRADES and ASSIGNMENT to predict certification (three #3) and I will compare it with tree #1 that uses only the variable FORUM.POSTS.
+
 ```{r}
+# my new tree (created for "pedagogical purposes"):
+c.tree3 <- rpart(certified ~  grade +assignment, method="class", data=M1)
+
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
-M2$predict2 <- predict(c.tree2, M2, type = "class")
+M2$predict3 <- predict(c.tree3, M2, type = "class")
 
 table(M2$certified, M2$predict1)
 
-table(M2$certified, M2$predict2)
+table(M2$certified, M2$predict3)
+
+fancyRpartPlot(c.tree3, caption = NULL)
 
 ```
+
+Analysis:
+First tree (uses only "forum.posts"):
+- Predicts about 45% of the "true NO" correctly.
+- Preducts about 55% if the "true YES" correctly.
+
+Third tree (uses only "grade" and "assignment"):
+- Predicts about 99% of the "true NO" correctly.
+- Preducts about 1% if the "true YES" correctly.
+
+The new tree seems to be very biased towards predicting students not to have a certificate. Probably due to a very "high" grading threshold of 7.5. 
 
 ##Part III
 
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
+ANSWER: 
+I am actually very interested in gender biases in education. So I decided to try to predict SEX as an outcome variable from the other information in the dataset. For example, do higher grades predict gender? Does the type of major predict gender? Does doing two majors predict gender? 
+
+Model A - High school GPA, SAT scores, ACT scores
+Model B - Same data as above, but now calculated as AVERAGES BY MAJOR, and also a dummy variable for engineering course. By using this, I want to see if men/women bundle in more/less selective courses, in term of previous SAT/ACT scores.[I have decided ex-post to eliminate HSGPA, because the tree was using only this data into the analysis. I don't know exactly way, but using the dummy for engineering was leading to an error in the rpart routine, and the tree coudn't be calculated. So I gave up on that variable as well]
+
+
 ```{r}
+# Read data
+UM <- as.data.frame(read_csv("https://raw.githubusercontent.com/fcarnauba/PLA/master/data/student.record.csv"))
+UM <- select(UM,SEX,HSGPA, 
+             LAST_SATI_VERB_SCORE,
+             LAST_SATI_MATH_SCORE,
+             LAST_SATI_TOTAL_SCORE,
+             LAST_ACT_ENGL_SCORE,
+             LAST_ACT_MATH_SCORE,
+             LAST_ACT_READ_SCORE,
+             LAST_ACT_SCIRE_SCORE,
+             LAST_ACT_COMP_SCORE,
+             MAJOR1_DESCR)
+
+
+#create averages of GPA, SAT and ACT for each major:
+UM <- UM %>%
+      group_by(MAJOR1_DESCR) %>%
+      mutate(mean.HSGPA = mean(HSGPA),
+         mean.SATI_VERB_SCORE  = mean(LAST_SATI_VERB_SCORE),
+         mean.SATI_MATH_SCORE  = mean(LAST_SATI_MATH_SCORE),
+         mean.SATI_TOTAL_SCORE = mean(LAST_SATI_TOTAL_SCORE),
+         mean.ACT_ENGL_SCORE   = mean(LAST_ACT_ENGL_SCORE),
+         mean.ACT_MATH_SCORE   = mean(LAST_ACT_MATH_SCORE),
+         mean.ACT_READ_SCORE   = mean(LAST_ACT_READ_SCORE),
+         mean.ACT_SCIRE_SCORE  = mean(LAST_ACT_SCIRE_SCORE),
+         mean.ACT_COMP_SCORE   = mean(LAST_ACT_COMP_SCORE))
+
+# create engineering variable (ended up not using, because it bugged the rpart routine)
+UM$eng <- as.factor(ifelse(grepl("eng", UM$MAJOR1_DESCR), "engineer", "other"))
+
+# FIRST MODEL
+c.treeA <- rpart(SEX ~ HSGPA  + 
+                 + LAST_SATI_VERB_SCORE
+                 + LAST_SATI_MATH_SCORE
+                 + LAST_SATI_TOTAL_SCORE
+                 + LAST_ACT_ENGL_SCORE
+                 + LAST_ACT_MATH_SCORE
+                 + LAST_ACT_READ_SCORE
+                 + LAST_ACT_SCIRE_SCORE
+                 + LAST_ACT_COMP_SCORE,
+                 method="class", data=UM)
+
+# Plot First model
+fancyRpartPlot(c.treeA, caption = NULL)
+
+
+# SECOND MODEL
+c.treeB <- rpart(SEX ~
+                  mean.SATI_MATH_SCORE
+                 + mean.SATI_TOTAL_SCORE
+                 + mean.ACT_ENGL_SCORE
+                 + mean.ACT_MATH_SCORE
+                 + mean.ACT_READ_SCORE
+                 + mean.ACT_SCIRE_SCORE
+                 + mean.ACT_COMP_SCORE,
+                 method="class", data=UM)
+
+# Plot Second model
+fancyRpartPlot(c.treeB, caption = NULL)
+
+
 
 ```
+
+## MODEL1.
+One very interesting feature is that the model used both SAT and ACT mathematics scores, even though there were many other scores available. A mathematics bias towards men is a well-researched phenomenon in the US, and we might me seing some of it here. While a high GPE is an indicator of a higher probability of being a female, math scores both in the ACT and SAT go in the opposite direction.
+
+
+## MODEL2.
+We can now see a "math bias" in terms of the average math (and science) SAT and ACT scores in the majors. Overall, majors in which those grades are higher have less women.
+
+Now let's look into the errors of each mdoel
+
+```{r}
+# my new tree (created for "pedagogical purposes"):
+UM$predictA <- predict(c.treeA, UM, type = "class")
+UM$predictB <- predict(c.treeB, UM, type = "class")
+
+table(UM$SEX, UM$predictA)
+
+table(UM$SEX, UM$predictB)
+
+
+```
+
+Model A provides a much better prediction, with 66% of women correctly pinned by the tree, and 44% of men correctly predicted. Model B basically assigns "everyone" as a man, with nearly 100% of women wrongly predicted, and 100% of men correctly predicted.   
 
 
 ### To Submit Your Assignment
