@@ -76,13 +76,14 @@ table(M2$certified, M2$predict2)
 
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
+
 ```{r}
 library(tidyr)
 library(dplyr)
 library(rpart)
 library(party)
 D1 <- read.csv("student.record.csv", header = TRUE)
-## outcome variable: HSGPA
+## outcome variable: SEX
 ## model 1 (raw variables): LAST_ACT_MATH_SCORE and LAST_SATI_MATH_SCORE
 c.tree3 <- rpart(SEX ~ LAST_ACT_MATH_SCORE + LAST_SATI_MATH_SCORE, method = "class", data = D1)
 post(c.tree3, file = "tree3.ps", title = "SEX")
@@ -103,6 +104,8 @@ D2$predict1 <- predict(c.tree3, D2, type = "class")
 D2$predict2 <- predict(c.tree4, D2, type = "class")
 t1 <- table(D2$SEX, D2$predict1)
 t2 <- table(D2$SEX, D2$predict2)
+
+## A: Based on the comparison between t1 and t2, the model 1 (i.e., c.tree3) is better, although there is no significant difference.
 ```
 
 ### To Submit Your Assignment
