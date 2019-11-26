@@ -1,7 +1,7 @@
 ---
 title: "Assignment 6"
-author: "Charles Lang"
-date: "11/16/2016"
+author: "Xi Yang"
+date: "11/14/2019"
 output: html_document
 ---
 #Addignment 6
@@ -25,7 +25,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE)
 
 ```
 
@@ -33,11 +33,10 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(as.factor(certified) ~ grade + assignment, method="class", data = M1)
 
 #Check the results from the classifcation tree using the printcp() command
-
-
+printcp(c.tree1)
 
 #Plot your tree
 
@@ -52,7 +51,8 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.058182)#Set cp to the level at which you want the tree to end
+# chose the 2nd cp
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -74,11 +74,44 @@ table(M2$certified, M2$predict2)
 
 ##Part III
 
-Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use 【raw variables】, the second should 【feature select or feature extract variables】 from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+D1 <- read.csv("student.course.txt")
+attach(D1)
+# ANONID, SUBJECT, CATALOG_NBR, GRD_PTS_PER_UNIT, GPAO, DIV, ANON_INSTR_ID, TERM
 
+# randomly choose 4000
+library(dplyr)
+D3 <- D1 [sample(c(1:1327065),4000),] 
 ```
+
+
+```{r}
+# model 1: all possible related variables
+# ANONID, SUBJECT, CATALOG_NBR, GRD_PTS_PER_UNIT, GPAO, DIV, ANON_INSTR_ID, TERM
+tree3 <- rpart(SUBJECT ~ ANONID + CATALOG_NBR + GRD_PTS_PER_UNIT + GPAO + DIV + ANON_INSTR_ID + TERM, data = D3)
+printcp(tree3)
+post(tree3, file = "tree3.ps", title = "SUBJECT")
+D4 <- D3
+D4$PREDICT1 <- predict(tree3, D3, type = "class")
+t1 <- table(D4$SUBJECT,D4$PREDICT1)
+sum(diag(t1)) # numbers of correct
+length(which(D4$SUBJECT == D4$PREDICT1)) 
+
+
+# model 2: extract variables
+# choose variables that I think is useful
+tree4 <- rpart(SUBJECT ~ CATALOG_NBR + DIV, data = D3)
+printcp(tree4)
+D4$PREDICT2 <- predict(tree4, D3, type = "class")
+t2 <- table(D4$SUBJECT,D4$PREDICT2)
+sum(diag(t2)) # numbers of correct
+length(which(D4$SUBJECT == D4$PREDICT2)) 
+
+# conclusion: the model using all variables have higher correct rate.
+```
+
 
 
 ### To Submit Your Assignment
