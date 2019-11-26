@@ -1,86 +1,180 @@
 ---
-title: "Assignment 6"
-author: "Charles Lang"
-date: "11/16/2016"
+title: "EDM Assignment 6"
+author: Joellyn Heng
+date: 26 November 2019
 output: html_document
 ---
-#Addignment 6
 
-In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
+####In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
 
-certified (yes/no) - Whether or not a student paid for the course  
-forum.posts (numeric) - How many forum posts a student made throughout the course  
-grade (numeric) - A student's average grade for the course exam  
-assignment (numeric) - A student's average grade for the course assignments  
+* certified (yes/no) - Whether or not a student paid for the course  
+* forum.posts (numeric) - How many forum posts a student made throughout the course  
+* grade (numeric) - A student's average grade for the course exam  
+* assignment (numeric) - A student's average grade for the course assignments  
 
 ##Part I
 
-#Packages
-```{r}
+```{r setup, include= FALSE}
 library(rpart)
+library(party)
+library(rpart.plot)
+library(dplyr)
+library(plyr)
+library(stringr)
 ```
 
-#Data
+####Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
+M2 <- read.csv("MOOC2.csv", header=TRUE)
 
-M2 <- 
+View(M1)
+View(M2)
 
 ```
 
-#Decision tree
-```{r}
-#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
-
-c.tree1 <- 
-
-#Check the results from the classifcation tree using the printcp() command
+####Decision tree
 
 
+####Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-#Plot your tree
+####Check the results from the classifcation tree using the printcp() command
 
-post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+```{r rpart and printcp}
+
+#Note: I changed the name of variable, as it is confusing to be called ctree, since ctree (i.e. conditional inference trees) is part of party package. rpart package is on cp of fitted rpart object.
+
+rpart0 <- rpart(certified ~ ., method="class", data=M1)
+
+printcp(rpart0)
+
+```
+
+When I do rpart on all independent variables, the only variable used for tree construction is `forum.posts`. Hence, it only has one node. This means that any split using the other variables (i.e. `grade` and `assignment`) does not decrease the overall lack of fit by a factor of cp = 0.01 (default). Hence, `forum.posts` can be used as the only variable.
+
+However, in order to move on to the Part II on pruning, the tree requires more splits. Hence, for the purpose of this exercise, I will use the variables `grade` and `assignment` instead.
+
+```{r grade and assignment}
+
+rpart1 <- rpart(certified ~ grade + assignment, method="class", data=M1)
+
+printcp(rpart1)
+
+rpart.plot(rpart1)
+post(rpart1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
 
 ```
 
 ##Part II
 
-#The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Complexity Parameter" and represents the cost to error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
+####The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Complexity Parameter" and represents the cost to error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
 
-#If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
+####If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
+
+To terminate the new tree at two nodes, I chose cp = 0.9, as the next node will only improve cp by 0.923 - 0.058 = 0.865 < 0.9. (Recall: cp means any split that does not decrease the overall lack of fit by a factor of cp is not attempted. The user informs the program that any split which does not improve the fit by cp will likely be pruned off by cross-validation, and that hence the program need not pursue it.)
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+rpart2 <- prune(rpart1, cp = 0.9)#Set cp to the level at which you want the tree to end
 
-#Visualize this tree and compare it to the one you generated earlier
+printcp(rpart1)
 
-post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot(rpart2)
+post(rpart2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
 ```
 
-#Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
+####Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
-M2$predict1 <- predict(c.tree1, M2, type = "class")
-
-M2$predict2 <- predict(c.tree2, M2, type = "class")
-
+M2$predict1 <- predict(rpart1, M2, type = "class")
 table(M2$certified, M2$predict1)
 
+M2$predict2 <- predict(rpart2, M2, type = "class")
 table(M2$certified, M2$predict2)
 
 ```
 
+rpart1:
+
+Error rate (ERR) = (FP+FN)/(P+N) = (7790+24)/(2056+24+7790+130) = 0.7814
+Accuracy (ACC) = 1-ERR = 0.2186
+
+rpart2:
+
+Error rate (ERR) = (FP+FN)/(P+N) = (3453+1184)/(896+1184+3453+4467) = 0.4637
+Accuracy (ACC) = 1-ERR = 0.5363
+
+rpart2 has a lower error rate. This is expected, as the pruning of nodes reduces overfitting and increases the ability to predict.
+
 ##Part III
 
-Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+####Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
-```{r}
+I selected variables that I wanted to examine across the two data files, and combined it into a data set called "df". It initially included `GPAO`, but it was the only variable used in the tree construction. Hence, I removed it for the purpose of this exercise. 
+
+(Question: what does it mean when there are multiple variables, but only 1 is used in tree construction? Understand it means cp does not reduce lack of fit by 0.01 with the next split, but does that mean it's the most important variable?)
+
+```{r own df}
+student_course <- read.csv("student.course.csv")
+student_record <- read.csv("student.record.csv")
+
+View(student_course)
+View(student_record)
+
+student_course1 <- student_course %>%
+  select(ANONID, GRD_PTS_PER_UNIT)
+
+#Note: I initially included `GPAO`, but when I do, all other variables are not used. Only `GPAO` was used in the construction of the tree.
+
+student_record1 <- student_record %>%
+  select(ANONID, MAJOR1_DESCR, HSGPA, LAST_ACT_ENGL_SCORE, LAST_ACT_MATH_SCORE, LAST_ACT_READ_SCORE, LAST_ACT_SCIRE_SCORE, LAST_ACT_COMP_SCORE, LAST_SATI_VERB_SCORE, LAST_SATI_MATH_SCORE, LAST_SATI_TOTAL_SCORE) %>%
+  na.omit()
+
+df <- student_course1 %>%
+  left_join(student_record1,by="ANONID") %>%
+  na.omit()
+#Note: df does not have unique ANONID, as one student might take several courses within PLA? 
+
+df$MAJOR_BS <- str_detect(df$MAJOR1_DESCR, "BS")
+
+df <- df %>%
+  select(-MAJOR1_DESCR) %>%
+  select(-ANONID)
 
 ```
 
+```{r model with variables}
 
-### To Submit Your Assignment
+rpart3<- rpart(GRD_PTS_PER_UNIT ~ ., method = "anova", data = df)
 
-Please submit your assignment by first "knitting" your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.
+printcp(rpart3)
+rpart.plot(rpart3)
+```
+
+```{r model with PCA}
+
+df2 <- df %>%
+  select(-GRD_PTS_PER_UNIT)
+
+df_scaled <- scale(df2, center = TRUE)
+pca <- prcomp(df_scaled, scale = TRUE)
+
+pca
+summary(pca)
+
+df_pca <- as.data.frame(pca$x) %>%
+  select(-c(PC7, PC8, PC9, PC10))
+
+df_pca <- cbind(df_pca, df$GRD_PTS_PER_UNIT)
+
+rpart4 <- rpart(df$GRD_PTS_PER_UNIT ~ ., method = "anova", data = df_pca)
+
+printcp(rpart4)
+
+rpart.plot(rpart4)
+
+```
+
+The model that uses PCA performs significantly better (xerror = 0.012) as compared to the model based on raw variables (xerror = 0.909), according to the xerror cross validation metric. The PCA may have reduced features that have multicollinearity (likely all the variables with `LAST_ACT_<subj>_SCORE`), resulting in lower prediction power. 
+
+(Question: The following was the result when I initially included `GPAO` (and only `GPAO` is used in tree construction): The model that uses raw variables is slightly better (xerror = 0.753) as compared to the PCA model (xerror = 0.762), according to the xerror cross validation metric. Question: why is that so? Is it because in this case, only `GPAO` is used in the tree construction anyway, and the PCA might have reduced features in order and reduced overfitting, therefore increasing CV error?)
