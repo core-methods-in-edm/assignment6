@@ -55,26 +55,33 @@ CP stands for "Complexity Parameter" and represents the cost to error for adding
 If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.  
 
 ```{r}
+# Change model variables
+c.tree2 <- rpart(formula = certified ~ grade + assignment, data = M1, method = "class", 
+                 control = rpart.control(minsplit = 1,minbucket = 1, cp = 0))
+
+# Check the results
+printcp(c.tree2)
+
 # Set cp to the level at which you want the tree to end
-c.tree2 <- prune(c.tree1, cp = 0.014545)
+c.tree3 <- prune(c.tree2, cp = 0.058182)
 
 # Visualize this tree and compare it to the one you generated earlier
-post(c.tree2, file = "tree2.ps", title = "MOOC") # This creates a pdf image of the tree
+post(c.tree3, file = "tree2.ps", title = "MOOC") # This creates a pdf image of the tree
 
 # another way to plot
-rpart.plot(x = c.tree2, yesno = 2, type = 0, extra = 0, main = "MOOC")
+rpart.plot(x = c.tree3, yesno = 2, type = 0, extra = 0, main = "MOOC")
 ```
 
 
 Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?  
 
-Two trees have the same error rate.
+The pruned tree has lower error rate.
 ```{r}
 # Prediction using original tree
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 # Prediction using pruned tree
-M2$predict2 <- predict(c.tree2, M2, type = "class")
+M2$predict2 <- predict(c.tree3, M2, type = "class")
 
 # Tabulate the prediction performance
 table(M2$certified, M2$predict1)
