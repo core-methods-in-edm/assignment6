@@ -461,34 +461,37 @@ printcp(tree3)</code></pre>
 ##     GPAO + DIV + ANON_INSTR_ID + TERM, data = D3)
 ## 
 ## Variables actually used in tree construction:
-## [1] CATALOG_NBR DIV        
+## [1] ANON_INSTR_ID CATALOG_NBR   DIV          
 ## 
-## Root node error: 3449/4000 = 0.86225
+## Root node error: 3475/4000 = 0.86875
 ## 
 ## n= 4000 
 ## 
 ##          CP nsplit rel error  xerror      xstd
-## 1  0.101769      0   1.00000 1.00000 0.0063197
-## 2  0.063207      2   0.79646 0.79646 0.0085051
-## 3  0.046535      3   0.73326 0.73326 0.0088421
-## 4  0.037692      5   0.64019 0.64019 0.0091190
-## 5  0.034503      6   0.60249 0.59843 0.0091640
-## 6  0.031023      7   0.56799 0.57350 0.0091681
-## 7  0.030154      8   0.53697 0.54798 0.0091548
-## 8  0.023002      9   0.50681 0.50681 0.0090956
-## 9  0.019426     12   0.43781 0.43781 0.0088892
-## 10 0.019136     13   0.41838 0.42244 0.0088243
-## 11 0.015947     14   0.39925 0.40273 0.0087303
-## 12 0.011018     16   0.36735 0.36735 0.0085307
-## 13 0.010000     17   0.35634 0.35981 0.0084828</code></pre>
+## 1  0.116547      0   1.00000 1.00000 0.0061457
+## 2  0.097842      1   0.88345 0.88345 0.0076882
+## 3  0.063022      2   0.78561 0.78561 0.0084722
+## 4  0.042878      3   0.72259 0.72259 0.0087980
+## 5  0.033094      5   0.63683 0.63683 0.0090483
+## 6  0.031367      6   0.60374 0.60230 0.0090902
+## 7  0.028777      7   0.57237 0.57583 0.0091001
+## 8  0.027338      8   0.54360 0.54158 0.0090842
+## 9  0.023405      9   0.51626 0.51626 0.0090517
+## 10 0.018705     12   0.44604 0.44604 0.0088667
+## 11 0.016115     13   0.42734 0.43022 0.0088052
+## 12 0.014388     14   0.41122 0.41755 0.0087505
+## 13 0.012662     15   0.39683 0.40115 0.0086723
+## 14 0.012086     16   0.38417 0.38935 0.0086108
+## 15 0.011223     17   0.37209 0.37784 0.0085464
+## 16 0.010000     18   0.36086 0.36719 0.0084829</code></pre>
 <pre class="r"><code>post(tree3, file = &quot;tree3.ps&quot;, title = &quot;SUBJECT&quot;)
 D4 &lt;- D3
 D4$PREDICT1 &lt;- predict(tree3, D3, type = &quot;class&quot;)
 t1 &lt;- table(D4$SUBJECT,D4$PREDICT1)
-sum(diag(t1)) # 2812</code></pre>
-<pre><code>## [1] 2771</code></pre>
-<pre class="r"><code>length(which(D4$SUBJECT == D4$PREDICT1)) # 2812 of 4000 correct</code></pre>
-<pre><code>## [1] 2771</code></pre>
+sum(diag(t1)) # numbers of correct</code></pre>
+<pre><code>## [1] 2746</code></pre>
+<pre class="r"><code>length(which(D4$SUBJECT == D4$PREDICT1)) </code></pre>
+<pre><code>## [1] 2746</code></pre>
 <pre class="r"><code># model 2: extract variables
 # choose variables that I think is useful
 tree4 &lt;- rpart(SUBJECT ~ CATALOG_NBR + DIV, data = D3)
@@ -500,30 +503,33 @@ printcp(tree4)</code></pre>
 ## Variables actually used in tree construction:
 ## [1] CATALOG_NBR DIV        
 ## 
-## Root node error: 3449/4000 = 0.86225
+## Root node error: 3475/4000 = 0.86875
 ## 
 ## n= 4000 
 ## 
 ##          CP nsplit rel error  xerror      xstd
-## 1  0.101769      0   1.00000 1.00000 0.0063197
-## 2  0.063207      2   0.79646 0.79646 0.0085051
-## 3  0.046535      3   0.73326 0.73326 0.0088421
-## 4  0.037692      5   0.64019 0.64019 0.0091190
-## 5  0.034503      6   0.60249 0.60075 0.0091627
-## 6  0.031023      7   0.56799 0.56799 0.0091668
-## 7  0.030154      8   0.53697 0.55117 0.0091574
-## 8  0.023002      9   0.50681 0.50681 0.0090956
-## 9  0.019426     12   0.43781 0.43810 0.0088904
-## 10 0.019136     13   0.41838 0.42157 0.0088204
-## 11 0.015947     14   0.39925 0.39925 0.0087125
-## 12 0.011018     16   0.36735 0.36735 0.0085307
-## 13 0.010000     17   0.35634 0.35865 0.0084752</code></pre>
+## 1  0.116547      0   1.00000 1.00000 0.0061457
+## 2  0.097842      1   0.88345 0.88345 0.0076882
+## 3  0.063022      2   0.78561 0.78561 0.0084722
+## 4  0.042878      3   0.72259 0.72259 0.0087980
+## 5  0.033094      5   0.63683 0.63971 0.0090433
+## 6  0.031367      6   0.60374 0.59626 0.0090942
+## 7  0.028777      7   0.57237 0.57094 0.0090998
+## 8  0.027338      8   0.54360 0.54590 0.0090880
+## 9  0.023405      9   0.51626 0.51626 0.0090517
+## 10 0.018705     12   0.44604 0.44604 0.0088667
+## 11 0.016115     13   0.42734 0.42906 0.0088004
+## 12 0.014388     14   0.41122 0.42216 0.0087710
+## 13 0.012662     15   0.39683 0.40058 0.0086694
+## 14 0.011223     16   0.38417 0.38590 0.0085919
+## 15 0.010000     17   0.37295 0.37583 0.0085346</code></pre>
 <pre class="r"><code>D4$PREDICT2 &lt;- predict(tree4, D3, type = &quot;class&quot;)
 t2 &lt;- table(D4$SUBJECT,D4$PREDICT2)
-sum(diag(t2)) # 2776</code></pre>
-<pre><code>## [1] 2771</code></pre>
-<pre class="r"><code>length(which(D4$SUBJECT == D4$PREDICT2)) # 2776 of 4000 correct</code></pre>
-<pre><code>## [1] 2771</code></pre>
+sum(diag(t2)) # numbers of correct</code></pre>
+<pre><code>## [1] 2704</code></pre>
+<pre class="r"><code>length(which(D4$SUBJECT == D4$PREDICT2)) </code></pre>
+<pre><code>## [1] 2704</code></pre>
+<pre class="r"><code># conclusion: the model using all variables have higher correct rate.</code></pre>
 <div id="to-submit-your-assignment" class="section level3">
 <h3>To Submit Your Assignment</h3>
 <p>Please submit your assignment by first “knitting” your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.</p>

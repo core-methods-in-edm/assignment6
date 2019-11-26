@@ -96,8 +96,8 @@ post(tree3, file = "tree3.ps", title = "SUBJECT")
 D4 <- D3
 D4$PREDICT1 <- predict(tree3, D3, type = "class")
 t1 <- table(D4$SUBJECT,D4$PREDICT1)
-sum(diag(t1)) # 2812
-length(which(D4$SUBJECT == D4$PREDICT1)) # 2812 of 4000 correct
+sum(diag(t1)) # numbers of correct
+length(which(D4$SUBJECT == D4$PREDICT1)) 
 
 
 # model 2: extract variables
@@ -106,11 +106,10 @@ tree4 <- rpart(SUBJECT ~ CATALOG_NBR + DIV, data = D3)
 printcp(tree4)
 D4$PREDICT2 <- predict(tree4, D3, type = "class")
 t2 <- table(D4$SUBJECT,D4$PREDICT2)
-sum(diag(t2)) # 2776
-length(which(D4$SUBJECT == D4$PREDICT2)) # 2776 of 4000 correct
+sum(diag(t2)) # numbers of correct
+length(which(D4$SUBJECT == D4$PREDICT2)) 
 
-
-
+# conclusion: the model using all variables have higher correct rate.
 ```
 
 
