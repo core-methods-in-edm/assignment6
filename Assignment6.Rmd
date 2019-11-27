@@ -22,7 +22,6 @@ In this assignment you will be looking at data from a MOOC. It contains the foll
 library(rpart)
 library(rpart.plot)
 library(Metrics)
-library(Boruta)
 ```
 
 ### Data
@@ -95,7 +94,7 @@ table(M2$certified, M2$predict2)
 
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?  
 
-The first model that predict outcome (GPA) from all other variables has less cross-validation error than the second model that predict outcome (GPA) from 3 independent variables - `SUBJECT`, `GRD_PTS_PER_UNIT`, `TERM`.
+Since xerror(model1) = 1.14077, xerror(model2) = 0.94064, the second model that predict outcome (GPA) from 3 independent variables - `SUBJECT`, `GRD_PTS_PER_UNIT`, `TERM` has less cross-validation error than the first model that predict outcome (GPA) from all other variables.
 ```{r}
 # read data
 umich <- read.csv("student.course.csv", header = TRUE)
@@ -167,7 +166,7 @@ for (i in 1:num_models) {
 
     # Train a model and store in the list
     umich_models[[i]] <- rpart(formula = GPAO ~ ., 
-                               data = umich_train, 
+                               data = umich_valid, 
                                method = "anova",
                                minsplit = minsplit,
                                maxdepth = maxdepth)
@@ -237,12 +236,72 @@ umich_tree2_opt <- prune(tree = umich_tree2,
 
 # Plot optimal second tree model
 post(umich_tree2_opt, file = "umich_tree2_opt.ps", title = "Optimal Second model")
+
+### 3. Model selection: using Grid search ###
+# Establish a list of possible values for minsplit and maxdepth
+minsplit <- seq(1, 4, 1)
+maxdepth <- seq(1, 6, 1)
+
+# Create a data frame containing all combinations 
+hyper_grid <- expand.grid(minsplit = minsplit, maxdepth = maxdepth)
+
+# Number of potential models in the grid
+num_models <- nrow(hyper_grid)
+
+# Create an empty list to store models
+umich_models <- list()
+
+## Model training: train the grid of models
+for (i in 1:num_models) {
+
+    # Get minsplit, maxdepth values at row i
+    minsplit <- hyper_grid$minsplit[i]
+    maxdepth <- hyper_grid$maxdepth[i]
+
+    # Train a model and store in the list
+    umich_models[[i]] <- rpart(formula = GPAO ~ SUBJECT + GRD_PTS_PER_UNIT + TERM, 
+                               data = umich_valid, 
+                               method = "anova",
+                               minsplit = minsplit,
+                               maxdepth = maxdepth)
+}
+
+## Evaluate model performaces
+# Number of potential models in the grid
+num_models <- length(umich_models)
+
+# Create an empty vector to store RMSE values
+rmse_values <- c()
+
+# Compute validation RMSE
+for (i in 1:num_models) {
+
+    # Retrieve the i^th model from the list
+    model <- umich_models[[i]]
+    
+    # Generate predictions on grade_valid 
+    pred <- predict(object = model, newdata = umich_valid)
+    
+    # Compute validation RMSE
+    rmse_values[i] <- rmse(actual = umich_valid$GPAO, 
+                           predicted = pred)
+}
+
+
+# Identify the model with smallest validation set RMSE
+best_model2 <- umich_models[[which.min(rmse_values)]]
+
+# Compute test set RMSE on best_model
+umich_pred_valid <- predict(object = best_model2,
+                            newdata = umich_test)
+rmse(actual = umich_test$GPAO, 
+     predicted = umich_pred_valid)
 ```
 
 ```{r}
 ### Comparison between Model 1 and Model 2 ### 
 printcp(best_model)
-printcp(umich_tree2_opt)
+printcp(best_model2)
 
 ```
 
