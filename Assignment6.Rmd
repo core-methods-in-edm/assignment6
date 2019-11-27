@@ -21,6 +21,8 @@ In this assignment you will be looking at data from a MOOC. It contains the foll
 ```{r}
 library(rpart)
 library(rpart.plot)
+library(Metrics)
+library(Boruta)
 ```
 
 ### Data
@@ -91,9 +93,156 @@ table(M2$certified, M2$predict2)
 
 ## Part III
 
-Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?  
+
+The first model that predict outcome (GPA) from all other variables has less cross-validation error than the second model that predict outcome (GPA) from 3 independent variables - `SUBJECT`, `GRD_PTS_PER_UNIT`, `TERM`.
+```{r}
+# read data
+umich <- read.csv("student.course.csv", header = TRUE)
+
+# random selection from the big data
+set.seed(123)
+umich_sample <- umich[sample(nrow(umich), 1000), ]
+
+# create assignment of data
+assignment <- sample(1:3, size = nrow(umich_sample), prob = c(.7, .15, .15), replace = TRUE)
+
+# Create a train, validation and tests from the original data frame 
+umich_train <- umich_sample[assignment == 1, ]    # subset grade to training indices only
+umich_valid <- umich_sample[assignment == 2, ]  # subset grade to validation indices only
+umich_test <- umich_sample[assignment == 3, ]   # subset grade to test indices only
+```
+
 
 ```{r}
+### 1. Model Training: First model ###
+umich_tree1 <- rpart(formula = GPAO ~ ., data = umich_train, method = "anova")
+
+# Check the results from the classifcation tree
+printcp(umich_tree1)
+
+# Plot first tree model
+post(umich_tree1, file = "umich_tree1.ps", title = "First model")
+
+### 2. Model Prediction ###
+# Generate predictions on a test set
+umich_pred1 <- predict(object = umich_tree1,   # model object 
+                       newdata = umich_test)  # test dataset
+
+# Compute the RMSE(Root Mean Squared Error)
+rmse(actual = umich_test$GPAO, 
+     predicted = umich_pred1)
+
+# Retrieve optimal cp value based on cross-validated error
+opt_index <- which.min(umich_tree1$cptable[, "xerror"])
+cp_opt <- umich_tree1$cptable[opt_index, "CP"]
+
+# Prune the model (to optimized cp value)
+umich_tree1_opt <- prune(tree = umich_tree1, 
+                         cp = cp_opt)
+
+# Plot optimal first tree model
+post(umich_tree1_opt, file = "umich_tree1_opt.ps", title = "Optimal First model")
+
+### 3. Model selection: using Grid search ###
+# Establish a list of possible values for minsplit and maxdepth
+minsplit <- seq(1, 4, 1)
+maxdepth <- seq(1, 6, 1)
+
+# Create a data frame containing all combinations 
+hyper_grid <- expand.grid(minsplit = minsplit, maxdepth = maxdepth)
+
+# Number of potential models in the grid
+num_models <- nrow(hyper_grid)
+
+# Create an empty list to store models
+umich_models <- list()
+
+## Model training: train the grid of models
+for (i in 1:num_models) {
+
+    # Get minsplit, maxdepth values at row i
+    minsplit <- hyper_grid$minsplit[i]
+    maxdepth <- hyper_grid$maxdepth[i]
+
+    # Train a model and store in the list
+    umich_models[[i]] <- rpart(formula = GPAO ~ ., 
+                               data = umich_train, 
+                               method = "anova",
+                               minsplit = minsplit,
+                               maxdepth = maxdepth)
+}
+
+## Evaluate model performaces
+# Number of potential models in the grid
+num_models <- length(umich_models)
+
+# Create an empty vector to store RMSE values
+rmse_values <- c()
+
+# Compute validation RMSE
+for (i in 1:num_models) {
+
+    # Retrieve the i^th model from the list
+    model <- umich_models[[i]]
+    
+    # Generate predictions on grade_valid 
+    pred <- predict(object = model, newdata = umich_valid)
+    
+    # Compute validation RMSE
+    rmse_values[i] <- rmse(actual = umich_valid$GPAO, 
+                           predicted = pred)
+}
+
+
+# Identify the model with smallest validation set RMSE
+best_model <- umich_models[[which.min(rmse_values)]]
+
+# Compute test set RMSE on best_model
+umich_pred_valid <- predict(object = best_model,
+                            newdata = umich_test)
+rmse(actual = umich_test$GPAO, 
+     predicted = umich_pred_valid)
+```
+
+
+
+```{r}
+### 1. Model Training: Second model ###
+# second model
+umich_tree2 <- rpart(formula = GPAO ~ SUBJECT + GRD_PTS_PER_UNIT + TERM, data = umich_train, method = "anova")
+
+# Check the results from the classifcation tree
+printcp(umich_tree2)
+
+# Plot second model
+post(umich_tree2, file = "umich_tree2.ps", title = "Second model")
+
+### 2. Model Prediction ###
+# Generate predictions on a test set
+umich_pred2 <- predict(object = umich_tree2,   # model object 
+                       newdata = umich_test)  # test dataset
+
+# Compute the RMSE(Root Mean Squared Error)
+rmse(actual = umich_test$GPAO, 
+     predicted = umich_pred2)
+
+# Retrieve optimal cp value based on cross-validated error
+opt_index2 <- which.min(umich_tree2$cptable[, "xerror"])
+cp_opt2 <- umich_tree2$cptable[opt_index2, "CP"]
+
+# Prune the model (to optimized cp value)
+umich_tree2_opt <- prune(tree = umich_tree2, 
+                         cp = cp_opt2)
+
+# Plot optimal second tree model
+post(umich_tree2_opt, file = "umich_tree2_opt.ps", title = "Optimal Second model")
+```
+
+```{r}
+### Comparison between Model 1 and Model 2 ### 
+printcp(best_model)
+printcp(umich_tree2_opt)
 
 ```
 
