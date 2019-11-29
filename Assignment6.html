@@ -490,9 +490,9 @@ printcp(c.tree3)</code></pre>
 ## 
 ##         CP nsplit rel error  xerror      xstd
 ## 1 0.030647      0   1.00000 1.00002 0.0050785
-## 2 0.029505      1   0.96935 0.96941 0.0049925
-## 3 0.011959      2   0.93985 0.94241 0.0049771
-## 4 0.010000      3   0.92789 0.93041 0.0049939</code></pre>
+## 2 0.029505      1   0.96935 0.96959 0.0049931
+## 3 0.011959      2   0.93985 0.94230 0.0049768
+## 4 0.010000      3   0.92789 0.93013 0.0049935</code></pre>
 <pre class="r"><code>R$predict1 &lt;- predict(c.tree3, R)
 
 T1 &lt;- R %&gt;% 
@@ -523,14 +523,11 @@ T2 &lt;- R.select %&gt;%
 
 sqrt(mean(T2$squared.residual, na.rm = T))</code></pre>
 <pre><code>## [1] 1.296395</code></pre>
-<div id="section" class="section level2">
-<h2></h2>
-<p>First model prediction = 1.322 Second model prediction = 1.296</p>
+<p>##Comment First model prediction = 1.322 Second model prediction = 1.296</p>
 <p>The second model that selected Admit_Term, Major1_Descr, and Major1_Dept has a better prediction since the prediction is lower than the first model, which is closer to 0.</p>
 <div id="to-submit-your-assignment" class="section level3">
 <h3>To Submit Your Assignment</h3>
 <p>Please submit your assignment by first “knitting” your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.</p>
-</div>
 </div>
 
 
