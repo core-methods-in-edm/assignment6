@@ -17,6 +17,7 @@ assignment (numeric) - A student's average grade for the course assignments
 
 #Packages
 ```{r}
+#I need to install agin the package.
 library(rpart)
 ```
 
@@ -25,7 +26,7 @@ library(rpart)
 #Upload the data sets MOOC1.csv and MOOC2.csv
 M1 <- read.csv("MOOC1.csv", header = TRUE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv",header = TRUE)
 
 ```
 
@@ -33,11 +34,13 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified ~ grade + assignment, method="class", data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
 
+# we use the function we have, and printcp()
 
+printcp(c.tree1)
 
 #Plot your tree
 
@@ -52,7 +55,8 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.010000)#Set cp to the level at which you want the tree to end
+# I choose the third one.
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -66,9 +70,21 @@ M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+#we have to classfied those. name it
 
-table(M2$certified, M2$predict2)
+D1<-table(M2$certified, M2$predict1)
+
+D2<-table(M2$certified, M2$predict2)
+
+# Then we can comapre the different 
+
+sum(diag(D1))/ nrow(M2)
+# we get the number is 0.2186
+
+sum(diag(D2)) / nrow(M2)
+
+# we got the same number we have : 0.2186
+
 
 ```
 
@@ -77,7 +93,85 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+# frist we into the website and rename the new file. csv
 
+# then we have to read the csv
+
+D3<- read.csv("student.record.csv",header = TRUE)
+
+# I found the data too big, 
+# I gonna use the sorces to predict gender
+
+D3<- D3[,c(4:13)]
+
+D3<- na.omit(D3)
+
+# get classify gender
+
+c.tree3 <- rpart(as.factor(SEX) ~., method = "class", data = D3)
+
+
+printcp(c.tree3)
+
+
+#I just got the data from the excel they have we have to use those sorce and predit
+
+HSGPA <- D3[,1]
+
+SEX <- D3[, 10]
+
+ACT <- D3[, 2:6]
+# make the rowsum and getting the score row 
+
+ACT$ACTscore <- rowSums(ACT)
+
+# get the sat sorce and make the rowsum
+
+SAT <- D3[, 7:9]
+
+SAT$SATscore <- rowSums(SAT)
+
+# get the d4 and cbind this 
+
+D4 <- cbind(HSGPA, ACT, SAT, SEX)
+
+# the c.tree and repart the sex 
+
+c.tree4 <- rpart(as.factor(SEX) ~ ACTscore + SATscore + HSGPA, method = "class", data = D4)
+
+# and printcp it 
+
+printcp(c.tree4)
+
+# predict the sex 
+
+D4$predict1 <- predict(c.tree3, D4 , type = "class")
+
+# and get the table and 
+table(D4$SEX, D4$predict1)
+
+# sum the those  and get table
+
+sum(diag(table(D4$SEX, D4$predict1)))/sum(table(D4$SEX, D4$predict1))
+
+# and we could get the the result: 0.6364782
+
+
+
+```
+```{r}
+# we have to get the second predict
+D4$predict2<-predict(c.tree4,D4,type = "class")
+
+# table the data 
+
+table(D4$SEX,D4$predict2)
+
+#AND THE sum divied the other table sum
+
+sum(diag(table(D4$SEX, D4$predict2))) / sum(table(D4$SEX, D4$predict2))
+
+#BUT we get the result is 0.5840641
 ```
 
 
