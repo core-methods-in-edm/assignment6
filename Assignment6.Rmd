@@ -18,14 +18,17 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+library(dplyr)
+library(party)
 ```
 
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- read.csv("MOOC1.csv", header = TRUE)
-
-M2 <- 
+f<-file.choose("~/Desktop/hudk4050/Assignment 6/MOOC1.csv")
+M1 <- read.csv(f, header = TRUE)
+f<-file.choose("~/Desktop/hudk4050/Assignment 6/MOOC2.csv")
+M2 <- read.csv(f, header = TRUE)
 
 ```
 
@@ -33,17 +36,19 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified~grade+assignment,method='class',data=M1)
 
 #Check the results from the classifcation tree using the printcp() command
 
-
+printcp(c.tree1)
 
 #Plot your tree
 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
 
 ```
+
+
 
 ##Part II
 
@@ -52,7 +57,7 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree2 <- prune(c.tree1, cp = 0.0707 )#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
@@ -63,12 +68,16 @@ post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of th
 
 ```{r}
 M2$predict1 <- predict(c.tree1, M2, type = "class")
-
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+t1 <- table(M2$certified, M2$predict1)
+t2 <- table(M2$certified, M2$predict2)
 
-table(M2$certified, M2$predict2)
+accuracy1 <- (t1[1,1]+t1[2,2])/(t1[1,1]+t1[1,2]+t1[2,1]+t1[2,2])
+accuracy2 <- (t2[1,1]+t2[2,2])/(t2[1,1]+t2[1,2]+t2[2,1]+t2[2,2])
+accuracy1
+accuracy2
+# Since 0.2186<0.5363, tree 2 has a lower error rate
 
 ```
 
@@ -77,7 +86,35 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+f<-file.choose("~/Desktop/hudk4050/Assignment 6/student.record.csv")
+data2 <- read.csv(f, header = TRUE)
 
+# first model
+data2 <- data2[,c(4:13)]
+data2<- na.omit(data2)
+c.tree3 <- rpart(as.factor(SEX) ~., method = "class", data = data2)
+printcp(c.tree3)
+# second model
+HSGPA <- data2[,1]
+SEX <- data2[, 10]
+ACT <- data2[, 2:6]
+ACT$ACTscore <- rowSums(ACT)
+SAT <- data2[, 7:9]
+SAT$SATscore <- rowSums(SAT)
+data3 <- cbind(HSGPA, ACT, SAT, SEX)
+c.tree4 <- rpart(as.factor(SEX) ~ ACTscore + SATscore + HSGPA, method = "class", data = data3)
+printcp(c.tree4)
+
+data3$predict1 <- predict(c.tree3, data3, type = "class")
+T1 <- table(data3$SEX, data3$predict1)
+a1 <- (T1[1,1]+T1[2,2])/(T1[1,1]+T1[1,2]+T1[2,1]+T1[2,2])
+data3$predict2 <- predict(c.tree4, data3, type = "class")
+T2 <- table(data3$SEX, data3$predict2)
+a2 <- (T2[1,1]+T2[2,2])/(T2[1,1]+T2[1,2]+T2[2,1]+T2[2,2])
+a1
+a2
+
+# Since 0.6365>0.5841, the first model has lower error rate
 ```
 
 
