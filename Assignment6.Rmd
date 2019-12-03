@@ -1,6 +1,10 @@
 ---
 title: "Assignment 6"
+<<<<<<< HEAD
 author: "Charles Lang, Edited by Hsiao Yang" 
+=======
+author: "Charles Lang" Edited by Hsiao Yang
+>>>>>>> 78a66c218b82b823759c202e5ed3dcd0a4bfb079
 date: "11/16/2016"
 output: html_document
 ---
@@ -18,8 +22,12 @@ assignment (numeric) - A student's average grade for the course assignments
 #Packages
 ```{r}
 library(rpart)
+<<<<<<< HEAD
 # install.packages("
 library(tidyverse)
+=======
+install.packages("rpart.plot")
+>>>>>>> 78a66c218b82b823759c202e5ed3dcd0a4bfb079
 library(rpart.plot)
 ```
 
@@ -80,10 +88,17 @@ M2$predict2 <- predict(c.tree2, M2, type = "class")
 T1 <- table(M2$certified, M2$predict1)
 
 T2 <- table(M2$certified, M2$predict2)
+<<<<<<< HEAD
 
 #Tree 1 True Results
 T1TR <- (T1[2,2]+T1[1,1])/sum(T1)
 
+=======
+
+#Tree 1 True Results
+T1TR <- (T1[2,2]+T1[1,1])/sum(T1)
+
+>>>>>>> 78a66c218b82b823759c202e5ed3dcd0a4bfb079
 #Tree 2 True Results
 T2TR <- (T2[2,2]+T2[1,1])/sum(T2)
 
@@ -97,6 +112,7 @@ Choose a data file from the (University of Michigan Open Data Set)[https://githu
 
 ```{r}
 
+<<<<<<< HEAD
 R.pre <- read.csv("student.record.csv", header = TRUE)
 R <- R.pre %>% 
   filter(HSGPA <= 4)
@@ -134,6 +150,14 @@ T2 <- R.select %>%
 sqrt(mean(T2$squared.residual, na.rm = T))
 
 
+=======
+R <- read.csv("student.record.csv", header = TRUE)
+
+c.tree3 <- rpart(as.factor(HSGPA) ~., method = "class", data = R)
+
+printcp(c.tree3)
+
+>>>>>>> 78a66c218b82b823759c202e5ed3dcd0a4bfb079
 ```
 ##Comment
 First model prediction = 1.322
