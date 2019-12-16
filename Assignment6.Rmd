@@ -42,6 +42,8 @@ printcp(c.tree1)
 #Plot your tree
 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot::rpart.plot(c.tree1,type=3,box.palette = c("red", "green"), fallen.leaves = TRUE)
+rpart.plot::rpart.plot(c.tree1)
 
 ```
 
@@ -53,10 +55,16 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 
 ```{r}
 c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+plotcp(c.tree1)
+printcp(c.tree1)
+rpart.plot::rpart.plot(c.tree1)
+c.tree2 <- prune(c.tree1, cp =0.058182)
 
 #Visualize this tree and compare it to the one you generated earlier
 
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot::rpart.plot(c.tree2)
+printcp(c.tree2)
 ```
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
@@ -69,7 +77,8 @@ M2$predict2 <- predict(c.tree2, M2, type = "class")
 table(M2$certified, M2$predict1)
 
 table(M2$certified, M2$predict2)
-
+mean(M2$certified==M2$predict1)
+mean(M2$certified==M2$predict2)
 ```
 
 ##Part III
@@ -77,6 +86,23 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+D3<- read.csv("student.record.csv",header = TRUE)
+D3<- D3[,c(4:13)]
+D3<- na.omit(D3)
+c.tree3 <- rpart(as.factor(SEX) ~., method = "class", data = D3)
+printcp(c.tree3)
+HSGPA <- D3[,1] 
+SEX <- D3[, 10]
+ACT <- D3[, 2:6]
+ACT$ACTscore <- rowSums(ACT)
+SAT <- D3[, 7:9]
+SAT$SATscore <- rowSums(SAT)
+D4 <- cbind(HSGPA, ACT, SAT, SEX)
+c.tree4 <- rpart(as.factor(SEX) ~ ACTscore + SATscore + HSGPA, method = "class", data = D4)
+printcp(c.tree4)
+D4$predict1 <- predict(c.tree3, D4 , type = "class")
+table(D4$SEX, D4$predict1)
+sum(diag(table(D4$SEX, D4$predict1)))/sum(table(D4$SEX, D4$predict1))
 
 ```
 
