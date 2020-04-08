@@ -1,2 +1,3 @@
 *.html linguist-detectable=false
+*.ps linguist-detectable=false
 *.Rmd linguist-language=R
