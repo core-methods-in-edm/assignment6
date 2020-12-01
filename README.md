@@ -6,11 +6,12 @@
 * You will be working in groups on a quantified student project
 * Download the *Sensor Kinetics Pro* app to your [iOS](https://itunes.apple.com/us/app/sensor-kinetics-pro/id623633248?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.innoventions.sensorkineticspro&hl=en) device (or similar gyroscope measuring app)
 * Split into subgroups with each subgroup investigating one measures available in the app
-* Each subgroup shopuld report back at the end of the 
+* Each subgroup shopuld report back aafter 20min with what they have learned  
 
 ### Task II
 * In consultation with your group select a physical activity that: a) can be measured using the app, b) has a concrrete, sontinuous, countable outcome and c) some members of the group are experts and some are novices at - If you are looking for inspiration you can find previous student projects below.
-* Collect measurements for all members of the group performing the task using the app. 
+* Collect measurements for all members of the group performing the task using the app
+* Create a Github repo where you can store and share your data
 * Using K-means, can you identify the novices from the experts using only the app data?
 * Visualize your results using ggplot2
 
@@ -25,6 +26,12 @@
 * If you could only choose one thing to predict the score for each member of your group (raw data variable, a cluster or a PC) what would it be and why?
 * Create a visualization that supports your conclusion
 * Based on your conclusion devise an intervention that would help novice members of your group imporve their performance
+
+### Task V
+* Submit a link to your Github repo containing your data, visualizations and conclusions to charles.lang@tc.columbia.edu by 5pm EDT 12/14/20.
+
+Goog luck!
+
 
 # Examples of Past Projects
 
