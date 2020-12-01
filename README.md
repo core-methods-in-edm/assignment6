@@ -28,7 +28,7 @@
 * Based on your conclusion devise an intervention that would help novice members of your group imporve their performance
 
 ### Task V
-* Submit a link to your Github repo containing your data, visualizations and conclusions to charles.lang@tc.columbia.edu by 5pm EDT 12/14/20.
+* Submit a link to your Github repo containing your data, code, visualizations and conclusions to charles.lang@tc.columbia.edu by 5pm EDT 12/14/20.
 
 Goog luck!
 
