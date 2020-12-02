@@ -23,9 +23,9 @@ library(rpart)
 #Data
 ```{r}
 #Upload the data sets MOOC1.csv and MOOC2.csv
-M1 <- read.csv("MOOC1.csv", header = TRUE)
+M1 <- read.csv("MOOC1.csv", header = TRUE,stringsAsFactors = FALSE)
 
-M2 <- 
+M2 <- read.csv("MOOC2.csv", header = TRUE,stringsAsFactors = FALSE)
 
 ```
 
@@ -33,16 +33,17 @@ M2 <-
 ```{r}
 #Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
 
-c.tree1 <- 
+c.tree1 <- rpart(certified~.,M1,method="class")
 
 #Check the results from the classifcation tree using the printcp() command
-
+printcp(c.tree1)
 
 
 #Plot your tree
 
 post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
-
+rpart.plot::rpart.plot(c.tree1,type=3,box.palette = c("red", "green"), fallen.leaves = TRUE)
+rpart.plot::rpart.plot(c.tree1)
 ```
 
 ##Part II
@@ -52,23 +53,41 @@ post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of th
 #If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
 
 ```{r}
-c.tree2 <- prune(c.tree1, cp = )#Set cp to the level at which you want the tree to end
+c.tree1 <- rpart(certified~grade+assignment,M1,method="class")
+
+plotcp(c.tree1)
+printcp(c.tree1)
+
+rpart.plot::rpart.plot(c.tree1)
+
+#post pruning at the second nodes, using the cp from the second level
+
+c.tree2 <- prune(c.tree1, cp =0.058182)#Set cp to the level at which you want the tree to end
 
 #Visualize this tree and compare it to the one you generated earlier
 
 post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+rpart.plot::rpart.plot(c.tree2)
+printcp(c.tree2)
 ```
+
 
 #Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
 
 ```{r}
+#compare the predictions from two different models
 M2$predict1 <- predict(c.tree1, M2, type = "class")
 
 M2$predict2 <- predict(c.tree2, M2, type = "class")
 
-table(M2$certified, M2$predict1)
+#using a confusing matrix to see the accuracy
+table(M2$certified, M2$predict1)#more wrong prediction totalling 7700+
 
-table(M2$certified, M2$predict2)
+table(M2$certified, M2$predict2)# more correct prediction totalling 5000+
+
+#accuracy rate
+mean(M2$certified==M2$predict1)#21.9%
+mean(M2$certified==M2$predict2)#53.6%
 
 ```
 
@@ -77,10 +96,64 @@ table(M2$certified, M2$predict2)
 Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
 
 ```{r}
+library(readr)
+
+df<-read.delim("student.course.txt",stringsAsFactors = FALSE,sep = ",")
+
+#create training data and testing data
+set.seed(726)
+df<-df[sample(nrow(df),1000),]
+
+#first model built with raw variable
+model1<-rpart(GPAO~.,df,method="anova")
+
+printcp(model1)
+
+plotcp(model1)
+
+rpart.plot::rpart.plot(model1)
+
+df$predicted1<-predict(model1,df,type = "vector")
+
+ # the mean difference between predicted and actual outcome
+mean(abs(df$predicted1-df$GPAO)) 
+```
+ a mean difference of 0.299  in GPAO from model1's prediction
+```{r}
+#second model built with feature selection or feature extraction
+#using PCA on all the numeric varibles
+df_num<-df[,c(1,3:5,7,8)]
+df_num<-sapply(df_num,as.numeric)
+
+df_num<-data.frame(scale(df_num))
+  
+pca <- prcomp(df_num, scale = TRUE)
+#plot scree plot to decide how many pcs that could be used in the model 
+plot(pca,type="lines")
 
 ```
 
+```{R}
+# according to the result, i decided to keep PC1,PC2
+pca1<-data.frame(pca[["x"]])
 
-### To Submit Your Assignment
+dff<-cbind(df,pca1)
 
-Please submit your assignment by first "knitting" your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.
+
+model2<-rpart(GPAO~PC1+PC2,dff, method = "anova")
+
+printcp(model2)
+
+plotcp(model2)
+
+rpart.plot::rpart.plot(model2)
+
+dff$predicted2<-predict(model2,dff,"vector")
+mean(abs(dff$predicted2-dff$GPAO))
+
+
+```
+
+ a mean difference of 0.216 in GPAO from model2's prediction
+ 
+ Therefore, model2 did a better job in prediction
