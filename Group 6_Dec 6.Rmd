@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6_Group 6"
-author: "Christina, Jiani, Yixiong, Mahshad, Yujie, Zhixin, Xi Gu, Jiaao"
+author: "Christina Huang, Jiani Yang, Yixiong Xu, Mahshad Davoodifard, Yujie Yang, Zhixin Zheng, Xi Gu, Jiaao"
 date: "12/6/2020"
 output: html_document
 ---
@@ -23,6 +23,9 @@ knitr::opts_chunk$set(echo = TRUE)
 * Collect measurements for all members of the group performing the task using the app
 * Create a Github repo where you can store and share your data
 * Using K-means, can you identify the novices from the experts using only the app data?
+
+### Yes, the experts are the data points with the lowest distance (highest stability) and longest time; all in all, the four data points in the middle of the graph are the experts.
+
 * Visualize your results using ggplot2
 
 ```{r}
@@ -30,6 +33,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(readr)
+library(GGally)
 
 
 D1 <- read_csv("Group 6  data.csv")
@@ -42,7 +46,7 @@ D4 <- data.frame(D3, fit$cluster)
 ggplot(D4, aes(distance, time, colour = fit.cluster)) + geom_point() + xlab("Distance") + ylab("Time")
 
 ```
-#Yes, the experts are the data points with the lowest distance (highest stability) and longest time; all in all, the four data points in the middle of the graph are the experts.
+### Yes, the experts are the data points with the lowest distance (highest stability) and longest time; all in all, the four data points in the middle of the graph are the experts.
 
 
 ### Task III
@@ -51,7 +55,7 @@ ggplot(D4, aes(distance, time, colour = fit.cluster)) + geom_point() + xlab("Dis
 * Run a PCA analysis on the data
 * What does PC1 represent in your analysis?
 
-#PC1 represents the question “I would recommend this activity to others”. 
+### PC1 represents the question “I would recommend this activity to others”. 
 
 * Visualize the PC1 results for each member of your group
 
@@ -63,18 +67,22 @@ ggcorr(K1[,-1], method = c("everything", "spearman"))
 K2 <- K1[,-1]
 pca <- prcomp(K2, scale. = TRUE)
 loadings <- abs(pca$rotation)
-summary(pca)
+loadings_2 <- data.frame(loadings)
+#Visualize the PC1 results for each member of your group
+plot(loadings_2$PC1, type = "points")
+
 ```
 
 ### Task IV
 * If you could only choose one thing to predict the score for each member of your group (raw data variable, a cluster or a PC) what would it be and why?
+
+### We choose raw distance and time variables to predict the score for each member of our group. We think that both time and distance as raw data variables can  be good predictors of novice and expert groups in our study. Based on the data and the nature of the exercise we implemented, we think that if you are an expert, you can hold up the position for a longer time and vice versa. We defined the distance based on the following:
+
+### Distance Formula: The distance between two points is the length of the path connecting them. The shortest path distance is a straight line. In a 3 dimensional plane, the distance between points (X1, Y1, Z1) and (X2, Y2, Z2) please find the formula in the google doc.
+
+### What it means in terms of correlation analysis that we did is that the longer a person holds up the position, they have a lower distance. In other words, there is negative correlation between time and distance. The following correlation table shows this negative correlation, supporting our argument.
+
 * Create a visualization that supports your conclusion
-
-#We choose raw distance and time variables to predict the score for each member of our group. We think that both time and distance as raw data variables can  be good predictors of novice and expert groups in our study. Based on the data and the nature of the exercise we implemented, we think that if you are an expert, you can hold up the position for a longer time and vice versa. We defined the distance based on the following:
-
-#Distance Formula: The distance between two points is the length of the path connecting them. The shortest path distance is a straight line. In a 3 dimensional plane, the distance between points (X1, Y1, Z1) and (X2, Y2, Z2) please find the formula in the google doc.
-
-#What it means in terms of correlation analysis that we did is that the longer a person holds up the position, they have a lower distance. In other words, there is negative correlation between time and distance. The following correlation table shows this negative correlation, supporting our argument.
 
 ```{r}
 D5 <- D3[, c(1,5)]
@@ -84,6 +92,6 @@ cor(D5)
 
 * Based on your conclusion devise an intervention that would help novice members of your group imporve their performance
 
-#We will recommend novice members of our group to move less while performing the Hollow Body Hold.
+### We will recommend novice members of our group to move less while performing the Hollow Body Hold.
 
 
