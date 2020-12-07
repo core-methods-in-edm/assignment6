@@ -59,7 +59,7 @@ ggplot(D4, aes(distance, time, colour = fit.cluster)) + geom_point() + xlab("Dis
 K1 <- read.csv("survey.csv")
 K1 <- K1[1:5,]
 ggpairs(K1, 2:8, progress = FALSE)
-ggcorr(K1[,-1], method = c("everything", "pearson"))
+ggcorr(K1[,-1], method = c("everything", "spearman"))
 K2 <- K1[,-1]
 pca <- prcomp(K2, scale. = TRUE)
 loadings <- abs(pca$rotation)
