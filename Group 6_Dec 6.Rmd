@@ -55,7 +55,12 @@ ggplot(D4, aes(distance, time, colour = fit.cluster)) + geom_point() + xlab("Dis
 * Run a PCA analysis on the data
 * What does PC1 represent in your analysis?
 
+<<<<<<< HEAD
+### PC1 represents the ratings for first and the second questions.
+###For PC1, Yixiong and Yujie both rated high for question 1 and question 2.
+=======
 ### PC1 represents the question “I would recommend this activity to others”. 
+>>>>>>> db6c1fa0f5c4441171a4cb6afe58833fbfa4d061
 
 * Visualize the PC1 results for each member of your group
 
@@ -65,11 +70,23 @@ K1 <- K1[1:5,]
 ggpairs(K1, 2:8, progress = FALSE)
 ggcorr(K1[,-1], method = c("everything", "spearman"))
 K2 <- K1[,-1]
+<<<<<<< HEAD
+K3 <-data.frame(t(K2))
+pca <- prcomp(K3, scale. = TRUE)
+pca
+pca$x
+X1 <- data.frame(pca$x)
+#loadings <- abs(pca$rotation)
+#loadings_2 <- data.frame(loadings)
+#Visualize the PC1 results for each member of your group
+plot(X1$PC1, type = "points")
+=======
 pca <- prcomp(K2, scale. = TRUE)
 loadings <- abs(pca$rotation)
 loadings_2 <- data.frame(loadings)
 #Visualize the PC1 results for each member of your group
 plot(loadings_2$PC1, type = "points")
+>>>>>>> db6c1fa0f5c4441171a4cb6afe58833fbfa4d061
 
 ```
 
