@@ -1,0 +1,55 @@
+---
+title: "H5_data_cleaning"
+author: "Paolo Rivas"
+date: "12/11/2020"
+output: html_document
+---
+
+## Data Cleaning H5
+Here we have two mayor problems. The first one, there are different amounts of data points per users. Second, our time variable is shown as a character with an excesive ammount of milliseconds. None of those are useful for a uniform measurement.
+
+Stept 1: import Dataframe an summarize information
+
+```{r}
+
+library(tidyverse)
+
+DF <- read_csv("~/Documents/raw_data_H5_all.csv")
+summary(DF)
+
+```
+Step 2: transform time(s) into timeframe data.
+```{r}
+class(DF$`Time (s)`) 
+```
+```{r}
+#this format works for formating time correctly into seconds and milliseconds
+t <- 0.00250;
+t2<- format(as.POSIXct(t, origin = "2020-01-12", tz = "America/chicago"), "%H:%M:%OS3")
+class(t2)
+#Now lets format this new character into time
+install.packages("chron")
+library(chron)
+x <- chron(times=t2)
+class(x)
+
+#### Now lets do it for our data
+
+t3 <- format(as.POSIXct(DF$`Time (s)`, origin = "2020-01-12", tz = "America/New_York"), "%H:%M:%S")
+DF$time_formated <- chron(times=t3)
+class(DF$time_formated) #We have a time daframe!
+```
+## Now, lets create time average dplyr with a double group_by
+
+```{r}
+library(dplyr)
+DF_clean <- DF %>%
+  group_by(Participant, time_formated) %>%
+  summarise(avg_x = mean(`Acceleration x (m/s^2)`),avg_y = mean(`Acceleration y (m/s^2)`), avg_z = mean(`Acceleration z (m/s^2)`) )
+
+```
+## Exporting the data to CSv
+```{r}
+write.csv(df, "Clean_data_H5.csv")
+```
+

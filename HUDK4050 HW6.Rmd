@@ -1,0 +1,203 @@
+---
+title: "HUDK4050 HW6"
+author: "Hangshi Jin"
+date: "12/11/2020"
+output: html_document
+---
+
+Data:
+x: Back and Forth
+y: Up and Down
+z: Left and Right
+Acceleration: Acceleration during the activity
+
+Survey Questions:
+Name: Name who participates in the activity
+Gender: The person's gender: female or Male
+Height: Personal Height in cm
+Weight: Personal Weight in kg
+Fitness: Overall fitness level on a scale of 1- 5: 1. Poor 2. Fair 3. Good 4. Very good 5. Excellent.
+Favor: How much the person prefer jumping: 1 being do not like and 5 being like it very much.
+Prior: If the person has prior experience of jumping rope or not: 1 being do not have much experience and 5 being have a lot of experience.
+Illness: Level of illness that might effect the person during jumping rope: 0 being have no illness and 5 being strongly effect by the illness.
+Happyness: Level of happiness before the person jumping rope: 1 being very sad and 5 being really happy.
+time_interval: The time when the person did the activity: Morning (6 am - 12pm), Afternoon  (12pm - 4pm), Evening (4 pm - 10 pm), Night (10 pm - 6 am). 
+last_meal: How long before jumping rope did the person have his/her last meal: 30mins-1 hour ago, 1 hour- 2 hours ago, more than 2 hours
+num_jumps: Number of jumps the person accomplished in 1-minute.
+
+
+```{r}
+library(dplyr)
+DF <- read.csv("Clean_data_H5.csv")
+plot(DF$avg_x)
+plot(DF$avg_y)
+plot(DF$avg_z)
+for(i in 1:nrow(DF)){
+  if(DF$avg_z[i]>2.5){
+    DF$avg_z[i] = DF$avg_z[i]-8
+  }
+}
+DF$avg_y = abs(DF$avg_y)
+DF = DF[,-1]
+DF$Participant[DF$Participant=="Vidya Madhaban"] = "Vidya Madhavan"
+DF = mutate(DF,gender = 1, height = 1, weight = 1, fitness = 1, favor = 1, prior = 1, illness = 1, happyness = 1, time_interval = 1, last_meal = 1, num_jumps = 1)
+names(DF)[1] = "name"
+```
+Since there were some negative values in the initial clean data, the plots seemingly to be inefficient to produce any visualization at this point. Therefore, we decided to use the absolute value of these negtive ones to plot new diagrams. 
+
+```{r}
+plot(DF$avg_x)
+plot(DF$avg_y)
+plot(DF$avg_z)
+```
+It turns out that the plot of y variable to be much more efficient after using the absolute value. 
+Based on the plots, we can tell that most of our data tend to be together with some outliers. 
+
+
+```{r}
+survey = read.csv("Jump Rope Research.csv")
+survey1 = select(survey, name = Q1, gender = Q2, height = Q3, weight = Q4, fitness = Q5, favor = Q6, prior = Q7, illness = Q8, happyness = Q9, time_interval = Q10, last_meal = Q11, num_jumps = Q12)
+survey1 = survey1[-c(1,2),]
+```
+
+```{r}
+colname = colnames(DF)
+colname = colname[-c(1:6)]
+for(j in colname){
+  for(i in 1:nrow(DF)){
+    DF[[j]][i] = survey1[[j]][survey1$name == DF$name[i]]
+  }
+}
+colname = c(7,10:16)
+for(i in colname){DF[,i] = as.factor(DF[,i])}
+colname1 = c(8,9,17)
+for(i in colname1){DF[,i] = as.numeric(DF[,i])}
+```
+
+
+In the following plots, we would see how each variable in our survey related to the data we got from the app during the activity.
+
+1: Jump Height and Personal Height
+Since y stands for the vertical position of where we put our phone, we assumed that taller people would place their phone higher than those petite ones. 
+We are, thereofre, interested to see whether taller people tend to jump higher or not.
+```{r}
+plot(DF$avg_y~DF$height)
+```
+Based on what the graph, we can see that there are no clear evidence that these is any relationship between these two variables. 
+
+2: Jump Height and Number of Jumps
+Next, we would want to see any correlation between y variable and number of jumps. In other words, if a person jump higher, would he/she tend to jump fewer jumps since it might take more energy to do a higher jump.
+```{r}
+plot(DF$avg_y~DF$num_jumps)
+```
+The plot we got shows that there is no clear relationship between number of jumps and jumping high. It might also indicate that in a short time frame, people tend to  jump in a consistent way. Since we only measured in 1-minute, your body would not quickly get tired or exhausted even if you jump higher than normal.
+
+
+3: Acceleration and Fitness Level
+Thirdly, we would like to see if fitness level have some effects on acceleration: do people have a higher level of fitness would have a higher value of acceleration during the activity.
+```{r}
+plot(DF$abs_acceleration~DF$fitness)
+```
+The barplot shows that: for those who self reported fitness level at 2 which means a fair level has a mean of acceleration slightly higher than those reported fitness level at 3 which means a good level of fitness.
+According to K-mean and PCA, an lower acceleration indicates better in jumping rope, we can tell that the plot proves it. 
+Though the mean values give a suprising result that people who have better fitness level have lower acceleration, the group with level 3 fitness has a much higher range of acceleration comparing to the other group. 
+Overall, we can conclude that fitness has some influence on acceleration that people who have higher fitness level would have higher value of acceleration.
+In addition, there are some outliers in the barplot which might because that most people choose a moderate answer in the survey question: 2 and 3 which caused some bias.
+
+
+4: Acceleration and Illness Level
+We assume that people have lower illness level would have higher acceleration.
+```{r}
+plot(DF$abs_acceleration~DF$illness)
+```
+The barplot shows that people who reported has a moderate illness level at 3 has a much lower acceleration than those who reported little or some illness. The plot proves our assumption that illness level would effect acceleration. 
+However, we can also see that people who reported little illness 1 effect have a slightly lower mean than those who reported has some illness 2. But level 1 has a much higher range than level 2. 
+There are also some outliers shows. In level 1, the outliers are those have slower acceleration than most of the others, this might due to some other factors that effect their acceleration during the activity such as fitness level which we just concluded above.
+In level 2, the outliers are mainly above the range, this might because of that the illness are not those would directly effect them from doing such activity. Another reason might because they have higher level of fitness that has positive relationship between acceleration. 
+
+
+
+5: Acceleration and Mood
+In this plot, we are interested in whether the happiness level before you jumping the rope would effect your acceleration. In other words, would people with higher happiness level tend to jump quicker?
+```{r}
+plot(DF$abs_acceleration~DF$happyness)
+```
+It is really interested to see how our mood would effect us when doing an activity. Accordign to the plot, we can see a upward treading that higher happiness level have a lower mean value of acceleration. (Higher number indicates higher level sadness.)
+Level 3 which is a moderate level of happiness has the highest range in this barplot. It might because of the fitness and illness level that cause this happens but it might also because happiness or mood is hard to define on scale, therefore, most people would choose a moderate answer for this question.
+
+
+```{r}
+DF1 = select(DF, abs_acceleration,avg_y,avg_x,avg_z)
+reg = lm(abs_acceleration~., DF1)
+summary(reg)
+```
+x has a p-value of 2.76e-10 and y has a p-value smaller than 2e-16. Both of these two variables conclude to be significant since their p-value are smaller than 0.05.
+The regression model indicates that the x variable which indicates back and forth, and y variable which indicates up and down, are the two significant variables with our response variable: acceleration. 
+
+```{r}
+DF = mutate(DF, time = rep(0:60,9))
+```
+
+```{r}
+library(ggplot2)
+ggplot(DF, aes(time, avg_z, colour = name)) + geom_line() + xlab("time")
+```
+
+
+```{r}
+pairs(DF1)
+```
+In this plot, we will mainly focused on the regression between acceleration and xyz variables to see whether there is any relationship between acceleration and the predictor variables. 
+From the plot, we can see that it is hardly to tell if there is any relationship between acceleration and the xyz variables that all the plots are in a cloud shape.
+
+```{r}
+cor(DF1)
+```
+The absolute value of correlation between acceleration and y is: 0.43044889 which stands for a moderate correlation.
+The absolute value of correlation between acceleration and x is: 0.26456843 which shows a relatively weak correlation.
+The absolute value of correlation between acceleration and z is: 0.009613775 which means that there is weak or no correlation between these two variables.
+
+
+Checking Normality and Constant Variance based on plots
+```{r}
+reg1 = lm(abs_acceleration~.,DF1)
+plot(reg1)
+```
+The first scatterplot of Residuals vs. Fitted values shows a cluster in the center. The plot indicates a violation to the OLS assumption. The unequal scatter might indicate different variances.
+The second QQ plot shows the straight line if the errors are distributed normally, but we can see that point 244, 306, and 307 are derived from the line. The qqplot suggests that the data is relatively normally distributed since most of the dots are on the line.
+Similar to the first one, the Scale-location show a cluster in the center which is a violation to the assumption of equal variance. 
+The Residuals vs. Leverage plot tells that point 244, 306, and 307are the levearge points which have the greatest influence on our model 
+
+Chekcing Nomality and Constant Variance statistically
+```{r}
+sresid <- rstudent(reg1)
+hist(sresid, freq = FALSE)
+lines(density(sresid), col = "blue", lwd = 3)
+xfit <- seq(-4, 4, length = 100)
+yfit <- dnorm(xfit, mean = mean(sresid), sd = sd(sresid))
+lines(xfit, yfit, col = "red", lwd = 3)
+```
+The normality is skewed to the right slightly.
+Conclusion: Not too bad and departure from normality is not too severe, and is skewed to the right so need hypothesis test.
+
+```{r}
+library(car)
+qqPlot(reg1)
+```
+There are several outliers beyond the CI, need hypothesis test.
+
+```{r}
+shapiro.test(sresid)
+```
+Conclusion: Since p-value < 0.05 we reject Ho: Normality fails to hold
+
+
+```{r}
+ncvTest(reg1)
+```
+p = 0.0010161 < 0.05
+Conclusion: We reject Ho: variance is not constant
+
+
+
+
