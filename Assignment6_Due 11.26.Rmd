@@ -1,0 +1,140 @@
+---
+title: "Assignment 6"
+author: "Charles Lang"
+date: "11/16/2016"
+output: html_document
+---
+#Addignment 6
+
+In this assignment you will be looking at data from a MOOC. It contains the following per-student variables:
+
+certified (yes/no) - Whether or not a student paid for the course  
+forum.posts (numeric) - How many forum posts a student made throughout the course  
+grade (numeric) - A student's average grade for the course exam  
+assignment (numeric) - A student's average grade for the course assignments  
+
+##Part I
+
+#Packages
+```{r}
+library(rpart)
+```
+
+#Data
+```{r}
+#Upload the data sets MOOC1.csv and MOOC2.csv
+M1 <- read.csv("MOOC1.csv", header = TRUE)
+
+M2 <- read.csv("MOOC2.csv", header = TRUE)
+
+```
+
+#Decision tree
+```{r}
+#Using the rpart package generate a classification tree predicting certified from the other variables in the M1 data frame. Which variables should you use?
+### Comments:  Use grade and assignment
+
+c.tree1 <- rpart(certified ~ grade + assignment, method="class", data=M1)
+
+#Check the results from the classifcation tree using the printcp() command
+
+printcp(c.tree1)
+
+#Plot your tree
+
+post(c.tree1, file = "tree1.ps", title = "MOOC") #This creates a pdf image of the tree
+
+```
+
+##Part II
+
+#The heading "xerror" in the printcp table stands for "cross validation error", it is the error rate of assigning students to certified/uncertified of the model averaged over 10-fold cross validation. CP stands for "Complexity Parameter" and represents the cost to error for adding a node to the tree. Notice it decreases as we add more nodes to the tree which implies that more nodes make better predictions. However, more nodes also mean that we may be making the model less generalizable, this is known as "overfitting".
+
+#If we are worried about overfitting we can remove nodes form our tree using the prune() command, setting cp to the CP value from the table that corresponds to the number of nodes we want the tree to terminate at. Let's set it to two nodes.
+
+```{r}
+c.tree2 <- prune(c.tree1, cp = 0.058182)#Set cp to the level at which you want the tree to end
+
+#Visualize this tree and compare it to the one you generated earlier
+
+post(c.tree2, file = "tree2.ps", title = "MOOC") #This creates a pdf image of the tree
+```
+
+#Now use both the original tree and the pruned tree to make predictions about the the students in the second data set. Which tree has a lower error rate?
+
+```{r}
+M2$predict1 <- predict(c.tree1, M2, type = "class")
+
+M2$predict2 <- predict(c.tree2, M2, type = "class")
+
+T1 <- table(M2$certified, M2$predict1)
+
+T2 <- table(M2$certified, M2$predict2)
+
+sum(diag(T1)) / nrow(M2)
+# Accuracy rate for c.tree1 is 0.2186
+
+sum(diag(T2)) / nrow(M2)
+# Accuracy rate for c.tree2 is 0.5363
+
+### Comments: The second tree has a lower error rate, that is more accurate.
+
+```
+
+##Part III
+
+Choose a data file from the (University of Michigan Open Data Set)[https://github.com/bkoester/PLA/tree/master/data]. Choose an outcome variable that you would like to predict. Build two models that predict that outcome from the other variables. The first model should use raw variables, the second should feature select or feature extract variables from the data. Which model is better according to the cross validation metrics?
+
+```{r}
+
+Part3_2 <- read.table("https://raw.githubusercontent.com/bkoester/PLA/master/data/student.record.csv", header = TRUE, sep = ",")
+
+# First Model Selection: Using variables of all test scores and sex.
+
+Part3_2_1 <- Part3_2[3:13]
+
+Part3_2_2 <- na.omit(Part3_2_1)
+
+Part3_c.tree1 <- rpart(as.factor(MAJOR1_DESCR) ~ ., method="class", data=Part3_2_2)
+
+printcp(Part3_c.tree1)
+
+post(Part3_c.tree1, file = "Part3_tree1.ps", title = "UM Open Data Set")
+
+# Second Model Selection: Using the last word in MAJOR1_DESCR variable as indication for students' degrees.
+library(stringr)
+
+Part3_2_2$DEGREE <- word(Part3_2_2$MAJOR1_DESCR, -1)
+
+Part3_2_3 <- Part3_2_2[, -1]
+
+Part3_c.tree2 <- rpart(as.factor(DEGREE) ~ ., method="class", data=Part3_2_3)
+
+printcp(Part3_c.tree2)
+
+post(Part3_c.tree2, file = "Part3_tree2.ps", title = "UM Open Data Set")
+
+
+# Comparison:
+Part3_2_2$predict1 <- predict(Part3_c.tree1, Part3_2_2, type = "class")
+
+Part3_2_3$predict2 <- predict(Part3_c.tree2, Part3_2_3, type = "class")
+
+Part3_T1 <- table(Part3_2_2$MAJOR1_DESCR, Part3_2_2$predict1)
+
+Part3_T2 <- table(Part3_2_3$DEGREE , Part3_2_3$predict2)
+
+sum(diag(Part3_T1)) / nrow(Part3_2_2)
+# Accuracy rate for model 1 is 0.07742186
+
+sum(diag(Part3_T2)) / nrow(Part3_2_3)
+# Accuracy rate for model 2 is 0.4552587
+
+### Comments: The second model is better according to its accuracy rates. The model 1's xerror is 0.9866 and the model 2's xerror is 0.90555. This also demonstrates that model 2 is better than model 1.
+
+```
+
+
+### To Submit Your Assignment
+
+Please submit your assignment by first "knitting" your RMarkdown document into an html file and then commit, push and pull request both the RMarkdown file and the html file.
